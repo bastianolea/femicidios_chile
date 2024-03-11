@@ -63,9 +63,14 @@ planillas <- map(registro_enlaces, ~{
 # descargar datos 2024 ----
 # porque esta tabla viene en otro formato, debe descargarse distinto
 library(googledrive)
-drive_download(registro_enlaces[15], path = "datos/femicidios 2024.xlsx")
+drive_download(registro_enlaces[15], path = "datos/femicidios_2024.xlsx")
 
 
+femicidios_2024 <- readxl::read_excel("datos/femicidios_2024.xlsx")
+
+#agregar 2024 a lista de planillas
+planillas_2 <- list(planillas, femicidios_2024) |> 
+  list_flatten()
 
 # limpiar planillas y guardar en excel ----
 
@@ -79,13 +84,23 @@ drive_download(registro_enlaces[15], path = "datos/femicidios 2024.xlsx")
 # fechas_2 <- fechas |> unlist() |> as_datetime()
 # planillas[[10]]
 
-planillas_limpias <- map(planillas, ~{
+femicidios_2024 |> 
+  janitor::clean_names() |> 
+  select(femicidios_2024) |> 
+  slice(4:8) |> 
+  mutate(fecha = janitor::excel_numeric_to_date(as.numeric(femicidios_2024)))
+
+
+planillas_limpias <- map(planillas_2, ~{
   # .x = planillas[[12]] #tiene texto escrito despues de unas fechas
   # .x = planillas[[10]]
+  # .x = planillas_2[[16]]
+  
+  # message("limpiando ", .x)
   
   if (is.null(.x)) return(tibble())
   
-  .x |>
+  datos_2 <- .x |>
     clean_names() |> 
     filter(!is.na(x5)) |> #columna que posiblemente es el nombre de la víctima
     row_to_names(1) |> 
@@ -97,12 +112,28 @@ planillas_limpias <- map(planillas, ~{
     mutate(across(where(is.list), ~map(.x, as.character))) |> #convertir todas las columnas de multiples formatos a caracter
     unnest(where(is.list), keep_empty = T) |> 
     select(-starts_with("na_"))
+  
+  #si las fechas vienen en formato excel (numeros que suman mas de 45 mil), convertir
+  fechas <- datos_2 |> 
+    filter(!is.na(fecha)) |> 
+    mutate(fecha = as.integer(fecha)) |> 
+    pull(fecha)
+  
+  if (any(!is.na(fechas)) & any(fechas > 45000)) {
+    message("convirtiendo fechas excel...")
+    datos_2 <- datos_2 |> 
+      mutate(fecha = as.numeric(fecha),
+             fecha = janitor::excel_numeric_to_date(fecha)) |> 
+      mutate(fecha = as.character(fecha)) #consistencia
+  }
+  return(datos_2)
 })
 
 
 # casos por año
 map_int(planillas_limpias, nrow)
 
+planillas_limpias
 
 # #guardar planillas individuales en excel ---- 
 walk(planillas_limpias, ~{
