@@ -6,34 +6,28 @@ suppressPackageStartupMessages(library(gt))
 suppressPackageStartupMessages(library(grid))
 suppressPackageStartupMessages(library(bslib))
 suppressPackageStartupMessages(library(htmltools))
-suppressPackageStartupMessages(library(colorspace))
 suppressPackageStartupMessages(library(shinycssloaders))
 suppressPackageStartupMessages(library(glue))
 
-# conflicted::conflicts_prefer(dplyr::count())
-# conflicted::conflicts_prefer(dplyr::filter())
+# datos ----
+femicidios <- arrow::read_parquet("datos/femicidios_chile_consolidado.parquet")
 
 # colores ----
 color_fondo = "#262626"
-color_detalle = "#262626" |> lighten(.4)
-color_na = "#262626" |> lighten(.2)
-color_texto = "#262626" |> lighten(.6)
+color_detalle = "#757575" #"#262626" |> lighten(.4)
+color_detalle_oscuro = "#303030" #color_detalle |> darken(.6)
+color_na = "#4C4C4C" #color_fondo |> lighten(.2)
+color_texto = "#A1A1A1" #color_fondo |> lighten(.6)
+color_texto_claro = "#C6C6C6" #color_texto |> lighten(.4)
 color_principal = "#f7d03a"
 color_intermedio = "#A36F01"
-color_secundario = "#f7d03a" |> darken(.8)
+color_secundario = "#332901" #color_principal |> darken(.8)
 color_negativo = "#EB3737"
 color_negativo_intermedio = "#EB802A"
 
 
 gradiente_amarillo_rojo <- colorRampPalette(c(color_principal, color_negativo))
 # hues::swatch(degradar_amarillo(6))
-
-gradiente_sombra <- linearGradient(
-  c(color_fondo, 
-    NA, NA, NA, NA), 
-  x1 = unit(0, "npc"), y1 = unit(0, "npc"),
-  x2 = unit(0, "npc"), y2 = unit(3, "npc")
-)
 
 degradar_amarillo <- colorRampPalette(c(color_fondo, color_fondo, color_principal), bias = 4)
 # hues::swatch(degradar_amarillo(6))
@@ -44,6 +38,20 @@ gradiente_amarillo <- linearGradient(
   x1 = unit(0, "npc"), y1 = unit(0, "npc"),
   x2 = unit(0, "npc"), y2 = unit(.8, "npc")
 )
+
+gradiente_amarillo_2 <- linearGradient(
+  c(degradar_amarillo(10),
+    color_principal), 
+  x1 = unit(0, "npc"), y1 = unit(0, "npc"),
+  x2 = unit(0, "npc"), y2 = unit(.4, "npc")
+)
+
+# gradiente_sombra <- linearGradient(
+#   c(color_fondo, 
+#     NA, NA, NA, NA), 
+#   x1 = unit(0, "npc"), y1 = unit(0, "npc"),
+#   x2 = unit(0, "npc"), y2 = unit(3, "npc")
+# )
 
 
 # temas ----
@@ -59,10 +67,6 @@ tema_texto <- list(theme(axis.text = element_text(color = color_texto),
                          legend.title = element_text(face = "bold"),
 )
 )
-
-# datos ----
-femicidios <- arrow::read_parquet("datos/femicidios_chile_consolidado.parquet")
-
 
 
 options(spinner.type = 8, spinner.color = color_principal)
@@ -108,96 +112,136 @@ ui <- fluidPage(
     .open = "{{", .close = "}}")
   ),
   
+  
+  
   ## header ----
   fluidRow(
     column(12,
+           style = css(margin_bottom = "16px"),
            
            h1("Femicidios en Chile", 
               style = css(color = color_principal,
-                          margin_top = "6px")
+                          margin_top = "20px")
            ),
            
-           markdown("Visualización de datos del [registro de femicidios](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/) realizado por la [Red Chilena contra la Violencia hacia las Mujeres](www.nomasviolenciacontramujeres.cl) desde 2010 en adelante."),
-           hr()
-    )
-  ),
-  
-  ## gráficos ----
-  
-  fluidRow(
-    column(12,
-           h3("Casos anuales de femicidios"),
-           plotOutput("grafico_historico") |> withSpinner(),
-           hr()
-    )
-  ),
-  
-  
-  fluidRow(
-    column(12,
-           h3("Femicidios anuales especificando violencia sexual"),
-           plotOutput("barras_violencia_sexual") |> withSpinner(),
-           hr()
-    )
-  ),
-  
-  fluidRow(
-    column(12,
-           h3("Femicidios por categoría del crimen"),
-           plotOutput("barras_categoria") |> withSpinner(),
-           hr()
-    )
-  ),
-  
-  
-  fluidRow(
-    column(12,
-           h3("Femicidios por edad de la víctima y edad del femicida"),
-           markdown("En este gráfico, cada punto corresponde a un femicidio, donde su altura indica la edad de la víctima, \ny el color de los puntos indica la diferencia de edad entre ella y el femicida"),
-           plotOutput("puntos_edad_1") |> withSpinner(),
-           hr()
-    )
-  ),
-  
-  fluidRow(
-    column(12,
-           h3("Femicidios por edad de la víctima y año del femicidio"),
-           markdown("Cada punto corresponde a un femicidio, donde su altura indica la edad de la víctima, y el color de los puntos indica la diferencia de edad entre ella y el femicida"),
-           plotOutput("puntos_edad_2") |> withSpinner(),
-           hr()
-    )
-  ),
-  
-  fluidRow(
-    column(12,
-           h3("Edades de femicidas, por año"),
-           plotOutput("puntos_edad_femicida") |> withSpinner(),
-           hr()
-    )
-  ),
-  
-  fluidRow(
-    column(12,
-           h3("Edades promedio de femicidas y víctimas, por año"),
-           plotOutput("lineas_edad_1") |> withSpinner(),
-           hr()
-    )
-  ),
-  
-  
-  
-  
-  ## tabla ----
-  fluidRow(
-    column(12, style = css(max_height = "1024px",
-                           overflow_y = "scroll"),
+           markdown("Visualización de datos del [registro de femicidios](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/) realizado por la [Red Chilena contra la Violencia hacia las Mujeres](www.nomasviolenciacontramujeres.cl) desde 2010 en adelante.")
            
-           h3("Detalle de casos de femicidio por año"),
-           
-           selectInput("tabla_año", label = "Seleccionar año", choices = 2024:2010, selected = 2023),
-           
-           gt_output("tabla_general") |> withSpinner()
     )
+  ),
+  
+  
+  # cuerpo ----
+  tabsetPanel(type = "pills",
+              header = div(style = css(margin_bottom = "28px")),
+              
+              tabPanel("Gráficos",
+                       
+                       ## gráficos ----
+                       
+                       fluidRow(
+                         column(12,
+                                h3("Casos anuales de femicidios"),
+                                plotOutput("grafico_historico") |> withSpinner(),
+                                hr()
+                         )
+                       ),
+                       
+                       
+                       fluidRow(
+                         column(12,
+                                h3("Femicidios anuales especificando violencia sexual"),
+                                plotOutput("barras_violencia_sexual") |> withSpinner(),
+                                hr()
+                         )
+                       ),
+                       
+                       fluidRow(
+                         column(12,
+                                h3("Femicidios por categoría del crimen"),
+                                plotOutput("barras_categoria") |> withSpinner(),
+                                hr()
+                         )
+                       ),
+                       
+                       
+                       fluidRow(
+                         column(12,
+                                h3("Femicidios por edad de la víctima y edad del femicida"),
+                                markdown("En este gráfico, cada punto corresponde a un femicidio, donde su altura indica la edad de la víctima, \ny el color de los puntos indica la diferencia de edad entre ella y el femicida"),
+                                plotOutput("puntos_edad_1") |> withSpinner(),
+                                hr()
+                         )
+                       ),
+                       
+                       fluidRow(
+                         column(12,
+                                h3("Femicidios por edad de la víctima y año del femicidio"),
+                                markdown("Cada punto corresponde a un femicidio, donde su altura indica la edad de la víctima, y el color de los puntos indica la diferencia de edad entre ella y el femicida"),
+                                plotOutput("puntos_edad_2") |> withSpinner(),
+                                hr()
+                         )
+                       ),
+                       
+                       fluidRow(
+                         column(12,
+                                h3("Edades de femicidas, por año"),
+                                plotOutput("puntos_edad_femicida") |> withSpinner(),
+                                hr()
+                         )
+                       ),
+                       
+                       fluidRow(
+                         column(12,
+                                h3("Edades promedio de femicidas y víctimas, por año"),
+                                plotOutput("lineas_edad_1") |> withSpinner()
+                         )
+                       )
+                       
+              ),
+              
+              
+              
+              
+              ## tabla ----
+              tabPanel("Tablas",
+                       fluidRow(
+                         column(12, style = css(max_height = "2000px",
+                                                overflow_y = "scroll"),
+                                
+                                h3("Detalle de casos de femicidio por año"),
+                                
+                                selectInput("tabla_año", label = "Seleccionar año", choices = 2024:2010, selected = 2023),
+                                
+                                gt_output("tabla_general") |> withSpinner()
+                                
+                         )
+                       )
+              ),
+              
+              
+              ## descargar ----
+              tabPanel("Datos",
+                       fluidRow(
+                         column(12,
+                                # br(),
+                                # hr(),
+                                h2("Descargar datos"),
+                                br(),
+                                
+                                markdown("Descargar datos de femicidios procesados y limpiados, a partir de los datos originales compilados y mantenidos por la [Red Chilena contra la Violencia hacia las Mujeres](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/)."),
+                                markdown("La diferencia de este dataset con los datos originales es la mayoría de las variables categóricas han sido limpiadas y en varios casos simplificadas, y los nombres de las variables han sido estandarizados, permitiendo unir en un solo archivo los registros desde 2010 hasta 2024."),
+                                # downloadButton("descargar_2024", label = "Datos femicidios 2024", 
+                                #                style = css(background_color = color_principal)
+                                # ),
+                                
+                                div(style = css(margin_top = "20px"),
+                                    downloadButton("descargar_todo", label = "Descargar datos consolidados", 
+                                                   style = css(background_color = color_principal)
+                                    )
+                                )
+                         )
+                       )
+              )
   ),
   
   ## firma ----
@@ -238,9 +282,9 @@ server <- function(input, output) {
       geom_area(fill = gradiente_amarillo) +
       geom_segment(aes(yend = 0, y = victimas + 5, xend = año), color = color_fondo, alpha = .2) +
       geom_text(aes(label = victimas, y = -3),
-                color = color_texto |> lighten(.4), size = 4, fontface = "bold") +
-      geom_line(stat = "smooth", method = "lm", color = color_fondo, linewidth = 2, alpha = .8, lineend = "round") +
-      geom_line(stat = "smooth", method = "lm", color = color_negativo, linewidth = 1, alpha = .8) +
+                color = color_texto_claro, size = 4, fontface = "bold") +
+      # geom_line(stat = "smooth", method = "lm", color = color_fondo, linewidth = 2, alpha = .8, lineend = "round") +
+      # geom_line(stat = "smooth", method = "lm", color = color_negativo, linewidth = 1, alpha = .8) +
       coord_cartesian(clip = "off") +
       scale_y_continuous(expand = expansion(c(0.01, 0)), breaks = seq(10, 70, by = 10)) +
       scale_x_continuous(breaks = 2010:2024, expand = expansion(0.01)) +
@@ -266,14 +310,17 @@ server <- function(input, output) {
       ggplot(aes(año, victimas)) +
       geom_col(aes(fill = violencia_sexual), width = 0.6) +
       geom_point(aes(color = violencia_sexual), size = NA) +
-      geom_area(data = tibble(año = 2009:2024, victimas = 60), outline.type = "lower", color = color_fondo,
-                fill = gradiente_sombra, alpha = 1) +
+      # geom_area(data = tibble(año = 2009:2024, victimas = 60), outline.type = "lower", color = color_fondo,
+      #           fill = gradiente_sombra, alpha = 1) +
       geom_segment(data = tibble(victimas = seq(10, 60, by = 10)),
                    aes(x = 2009, xend = 2024, y = victimas), 
                    color = color_fondo, alpha = .2) +
-      scale_fill_manual(values = c("Violencia sexual" = color_negativo,
-                                   "Presunta violencia sexual" = color_negativo_intermedio,
-                                   "Otros casos" = color_principal), aesthetics = c("fill", "color")) +
+      scale_fill_manual(values = list(color_negativo,
+                                      color_negativo_intermedio,
+                                      gradiente_amarillo_2)) +
+      scale_color_manual(values = c("Violencia sexual" = color_negativo,
+                                    "Presunta violencia sexual" = color_negativo_intermedio,
+                                    "Otros casos" = color_principal)) +
       scale_y_continuous(expand = expansion(c(0.01, 0.01)))+
       scale_x_continuous(breaks = 2010:2023,
                          expand = expansion(c(0, 0))) +
@@ -289,7 +336,7 @@ server <- function(input, output) {
             legend.margin = margin(t = 10, b = -10),
             plot.title = element_text(color = "grey80"),
             plot.subtitle = element_text(color = "grey80"),
-            axis.text.y = element_text(margin = margin(l = 4, r = -18)),
+            axis.text.y = element_text(margin = margin(l = 4, r = -12)),
             axis.title.x = element_text(margin = margin(t = 12, b = 0)))
   }) |> 
     bindCache()
@@ -306,8 +353,10 @@ server <- function(input, output) {
       ggplot(aes(año, n, fill = categoria_femicidio_2, col = categoria_femicidio_2)) +
       geom_col(width = 0.6, color = alpha(color_fondo, .2)) +
       geom_point(size = NA) +
-      geom_area(data = tibble(año = 2009:2024, n = 60), outline.type = "lower", color = color_fondo,
-                fill = gradiente_sombra, alpha = 1) +
+      # geom_area(data = tibble(año = 2009:2024, n = 60), outline.type = "lower", color = color_fondo,
+      #           fill = gradiente_sombra, alpha = 1) +
+      scale_fill_brewer(palette = "Dark2") +
+      scale_color_brewer(palette = "Dark2") +
       scale_y_continuous(expand = expansion(c(0, 0.1)))+
       scale_x_continuous(breaks = 2010:2023,
                          expand = expansion(c(0, 0))) +
@@ -356,7 +405,7 @@ server <- function(input, output) {
       labs(y = "Edad de la víctima al momento del femicidio",
            x = "Edad del femicida al ejecutar el crimen", 
            color = "Diferencia de edad\nentre femicida y víctima") +
-      theme(panel.grid.major = element_line(color = color_detalle |> darken(.6))) +
+      theme(panel.grid.major = element_line(color = color_detalle_oscuro)) +
       theme(legend.title = element_text(hjust = 1),
             legend.text = element_text(margin = margin(l = 4, r = 0)),
             legend.margin = margin(l = -20),
@@ -383,7 +432,7 @@ server <- function(input, output) {
       labs(y = "Edad de la víctima al momento del femicidio",
            x = "Año del femicidio", 
            color = "Diferencia de edad\nentre femicida y víctima") +
-      theme(panel.grid.major.y = element_line(color = color_detalle |> darken(.6))) +
+      theme(panel.grid.major.y = element_line(color = color_detalle_oscuro)) +
       theme(legend.position = "top") +
       theme(legend.title = element_text(hjust = 1),
             legend.text = element_text(margin = margin(r = 6)),
@@ -525,6 +574,18 @@ server <- function(input, output) {
                   table.background.color = color_fondo, 
                   table.font.names = "Archivo Narrow")
   })
+  
+  
+  ## descargas ----
+  
+  output$descargar_todo <- downloadHandler(
+    filename = function() {
+      "femicidios_chile_consolidado.xlsx"
+    },
+    content = function(file) {
+      file.copy("datos/femicidios_chile_consolidado.xlsx", file)
+    }
+  )
 }
 
 

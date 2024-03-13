@@ -188,3 +188,4 @@ datos_5 <- datos_4 |>
 # guardar ----
 writexl::write_xlsx(datos_5, "datos/femicidios_chile_consolidado.xlsx")
 arrow::write_parquet(datos_5, "datos/femicidios_chile_consolidado.parquet")
+arrow::write_parquet(datos_5, "app/femicidios_chile_consolidado.parquet")

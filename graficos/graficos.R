@@ -3,12 +3,12 @@ library(dplyr)
 library(forcats)
 library(ggplot2)
 library(grid)
-library(thematic)
-library(fresh)
+# library(thematic)
+# library(fresh)
 library(colorspace)
-library(colorjam)
-conflicted::conflicts_prefer(dplyr::count())
-conflicted::conflicts_prefer(dplyr::filter())
+# library(colorjam)
+# conflicted::conflicts_prefer(dplyr::count())
+# conflicted::conflicts_prefer(dplyr::filter())
 
 color_fondo = "#262626"
 color_detalle = "#262626" |> lighten(.4)
@@ -42,7 +42,16 @@ gradiente_amarillo_rojo <- colorRampPalette(c(color_principal, color_negativo))
 
 gradiente_sombra <- linearGradient(
   c(color_fondo, 
-    NA, NA, NA, NA), 
+    NA, NA, NA, NA
+    # fill_alpha(color_fondo, .5),
+    # fill_alpha(color_fondo, 0)
+    # blend_colors(c(rep(color_fondo, 4), NA)),
+    # blend_colors(c(rep(color_fondo, 3), NA)),
+    # blend_colors(c(rep(color_fondo, 2), NA)),
+    # blend_colors(c(color_fondo, color_invisible)),
+    # degradar_sombra(10),
+    # color_invisible
+    ), 
   x1 = unit(0, "npc"), y1 = unit(0, "npc"),
   x2 = unit(0, "npc"), y2 = unit(3, "npc")
 )
@@ -55,6 +64,13 @@ gradiente_amarillo <- linearGradient(
     color_principal), 
   x1 = unit(0, "npc"), y1 = unit(0, "npc"),
   x2 = unit(0, "npc"), y2 = unit(.8, "npc")
+)
+
+gradiente_amarillo_2 <- linearGradient(
+  c(degradar_amarillo(10),
+    color_principal), 
+  x1 = unit(0, "npc"), y1 = unit(0, "npc"),
+  x2 = unit(0, "npc"), y2 = unit(.4, "npc")
 )
 
 #—----
@@ -99,9 +115,12 @@ femicidios |>
   geom_segment(data = tibble(victimas = seq(10, 60, by = 10)),
                  aes(x = 2009, xend = 2024, y = victimas), 
                color = color_fondo, alpha = .2) +
-  scale_fill_manual(values = c("Violencia sexual" = color_negativo,
+  scale_fill_manual(values = list(color_negativo,
+                               color_negativo_intermedio,
+                               gradiente_amarillo_2)) +
+  scale_color_manual(values = c("Violencia sexual" = color_negativo,
                                "Presunta violencia sexual" = color_negativo_intermedio,
-                               "Otros casos" = color_principal), aesthetics = c("fill", "color")) +
+                               "Otros casos" = color_principal)) +
   scale_y_continuous(expand = expansion(c(0.01, 0.01)))+
   scale_x_continuous(breaks = 2010:2023,
                      expand = expansion(c(0, 0))) +
