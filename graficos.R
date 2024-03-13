@@ -30,53 +30,56 @@ tema_fondo <- list(theme(plot.background = element_rect(fill = color_fondo, line
 ))
 
 tema_texto <- list(theme(axis.text = element_text(color = color_texto),
-                         text = element_text(color = color_texto)))
+                         text = element_text(color = color_texto),
+                         axis.title = element_text(face = "bold"),
+                         legend.title = element_text(face = "bold"),
+                         )
+                   )
 
-gradiente_amarillo <- linearGradient(
-  c(color_fondo, 
-    blend_colors(c(rep(color_fondo, 3), color_principal)),
-    blend_colors(c(rep(color_fondo, 2), color_principal)),
-    blend_colors(c(color_fondo, color_principal)),
-    blend_colors(c(color_fondo, rep(color_principal, 2))),
-    # darken(color_principal, .8), darken(color_principal, .7),
-    # darken(color_principal, .5), darken(color_principal, .3), darken(color_principal, .2),
-    color_principal), 
-  x1 = unit(0, "npc"), y1 = unit(0, "npc"),
-  x2 = unit(0, "npc"), y2 = unit(.7, "npc")
-)
 
 gradiente_amarillo_rojo <- colorRampPalette(c(color_principal, color_negativo))
+# hues::swatch(degradar_amarillo(6))
 
-color_invisible = NA
 gradiente_sombra <- linearGradient(
   c(color_fondo, 
-    blend_colors(c(rep(color_fondo, 4), color_invisible)),
-    blend_colors(c(rep(color_fondo, 3), color_invisible)),
-    blend_colors(c(rep(color_fondo, 2), color_invisible)),
-    blend_colors(c(color_fondo, color_invisible)),
-    color_invisible), 
+    NA, NA, NA, NA), 
   x1 = unit(0, "npc"), y1 = unit(0, "npc"),
   x2 = unit(0, "npc"), y2 = unit(3, "npc")
+)
+
+degradar_amarillo <- colorRampPalette(c(color_fondo, color_fondo, color_principal), bias = 4)
+# hues::swatch(degradar_amarillo(6))
+
+gradiente_amarillo <- linearGradient(
+  c(degradar_amarillo(10),
+    color_principal), 
+  x1 = unit(0, "npc"), y1 = unit(0, "npc"),
+  x2 = unit(0, "npc"), y2 = unit(.8, "npc")
 )
 
 #—----
 
 # area: casos con gradiente ----
 femicidios |> 
+  filter(año < 2024) |> 
   group_by(año) |> 
   summarize(victimas = n()) |>
-  mutate(p = mean(victimas),
-         v = p * 0.03) |> 
   ggplot(aes(año, victimas)) +
   geom_area(fill = gradiente_amarillo) +
-  geom_segment(aes(yend = 0, y = victimas + 10, xend = año), color = color_fondo, alpha = .2) +
-  # geom_text(aes(label = victimas, y = victimas + v), vjust = 0) +
-  scale_y_continuous(expand = expansion(c(0, 0.1)))+
-  scale_x_continuous(breaks = 2010:2024, expand = expansion(0)) +
+  geom_segment(aes(yend = 0, y = victimas + 5, xend = año), color = color_fondo, alpha = .2) +
+  geom_text(aes(label = victimas, y = -3),
+            color = color_texto |> lighten(.4), size = 4, fontface = "bold") +
+  geom_line(stat = "smooth", method = "lm", color = color_fondo, linewidth = 2, alpha = .8, lineend = "round") +
+  geom_line(stat = "smooth", method = "lm", color = color_negativo, linewidth = 1, alpha = .8) +
+  coord_cartesian(clip = "off") +
+  scale_y_continuous(expand = expansion(c(0.01, 0)), breaks = seq(10, 70, by = 10)) +
+  scale_x_continuous(breaks = 2010:2024, expand = expansion(0.01)) +
   theme_minimal() +
-  theme(axis.line = element_blank()) +
-  tema_fondo +
-  tema_texto
+  theme(axis.line = element_blank(),
+        axis.text.y = element_text(margin = margin(l = 4, r = 0)),
+        axis.text.x = element_text(margin = margin(t = 1, b = 6))) +
+  tema_fondo + tema_texto +
+  labs(y = "Víctimas de femicidio", x = "Femicidios por año")
 
 
 # area: casos por violencia sexual ----
@@ -89,48 +92,57 @@ femicidios |>
   group_by(año, violencia_sexual) |> 
   summarize(victimas = n()) |>
   ggplot(aes(año, victimas)) +
-  # geom_area(fill = gradiente_amarillo) +
-  geom_col(aes(fill = violencia_sexual), width = 0.6, 
-           # color = alpha(color_fondo, .2)
-           ) +
+  geom_col(aes(fill = violencia_sexual), width = 0.6) +
   geom_point(aes(color = violencia_sexual), size = NA) +
-  geom_area(data = tibble(año = 2009:2024,
-                          victimas = 60),
+  geom_area(data = tibble(año = 2009:2024, victimas = 60), outline.type = "lower", color = color_fondo,
             fill = gradiente_sombra, alpha = 1) +
   geom_segment(data = tibble(victimas = seq(10, 60, by = 10)),
                  aes(x = 2009, xend = 2024, y = victimas), 
                color = color_fondo, alpha = .2) +
   scale_fill_manual(values = c("Violencia sexual" = color_negativo,
                                "Presunta violencia sexual" = color_negativo_intermedio,
-                               "Otros casos" = color_principal
-                               ), aesthetics = c("fill", "color")) +
-  scale_y_continuous(expand = expansion(c(0, 0.1)))+
-  scale_x_continuous(breaks = 2010:2023, expand = expansion(0)) +
+                               "Otros casos" = color_principal), aesthetics = c("fill", "color")) +
+  scale_y_continuous(expand = expansion(c(0.01, 0.01)))+
+  scale_x_continuous(breaks = 2010:2023,
+                     expand = expansion(c(0, 0))) +
   theme_minimal() +
   theme(axis.line = element_blank()) +
-  tema_fondo +
-  tema_texto +
-  labs(color = "Presencia de violencia sexual", y = "Víctimas de femicidio por año") +
+  tema_fondo + tema_texto +
+  labs(color = "Presencia de\nviolencia sexual", y = "Víctimas de femicidio por año", x = NULL) +
   guides(fill = guide_none(),
-         color = guide_legend(override.aes = list(size = 4)))
+         color = guide_legend(override.aes = list(size = 4))) +
+  theme(legend.position = "top") +
+  theme(legend.title = element_text(hjust = 1),
+        legend.text = element_text(margin = margin(l = 0, r = 6)),
+        legend.margin = margin(t = 10, b = -10),
+        plot.title = element_text(color = "grey80"),
+        plot.subtitle = element_text(color = "grey80"),
+        axis.text.y = element_text(margin = margin(l = 4, r = -12)),
+        axis.title.x = element_text(margin = margin(t = 12, b = 0)))
 
 
 # casos por categoría ----
 femicidios |> 
+  filter(año < 2024) |> 
   group_by(año) |> 
   mutate(categoria_femicidio_2 = fct_infreq(categoria_femicidio_2)) |> 
   dplyr::count(categoria_femicidio_2, .drop = F) |> 
   mutate(p = mean(n),
          v = p * 0.03) |> 
-  ggplot(aes(año, n, fill = categoria_femicidio_2)) +
-  geom_col() +
+  ggplot(aes(año, n, fill = categoria_femicidio_2, col = categoria_femicidio_2)) +
+  geom_col(width = 0.6, color = alpha(color_fondo, .2)) +
+  geom_point(size = NA) +
   scale_y_continuous(expand = expansion(c(0, 0.1)))+
-  scale_x_continuous(breaks = 2010:2024) +
+  scale_x_continuous(breaks = 2010:2023) +
   theme_minimal() +
   tema_fondo +
   tema_texto +
   theme(axis.line = element_line(linewidth = 0.5, color = color_secundario),
-        axis.ticks = element_blank())
+        axis.ticks = element_blank(),
+        axis.text.y = element_text(margin = margin(l = 4, r = -4))) +
+  labs(y = "Femicidios según categoría", n = NULL, color = "Categorías de femicidio") +
+  guides(fill = guide_none(),
+         color = guide_legend(override.aes = list(size = 4, fill = NA, linewidth = NA)))
 
 
 #puntos diferencia edad ----
@@ -165,7 +177,6 @@ femicidios |>
        x = "Edad del femicida al ejecutar el crimen", 
        color = "Diferencia de edad\nentre femicida y víctima") +
   theme(panel.grid.major = element_line(color = color_detalle |> darken(.6))) +
-  # theme(legend.position = "top") +
   theme(legend.title = element_text(hjust = 1),
         legend.text = element_text(margin = margin(l = 4, r = 0)),
         legend.margin = margin(l = -20),
@@ -220,6 +231,7 @@ femicidios |>
   geom_hline(yintercept = 18, color = color_principal) +
   geom_hline(aes(yintercept = median(edad_femicida, na.rm = T)), 
              color = "red", linewidth = 2) +
+  scale_x_date(date_breaks = "years", date_labels = "%Y") +
   tema_fondo +
   tema_texto
 
@@ -233,10 +245,14 @@ femicidios |>
   geom_segment(aes(y = edad_victima, yend = edad_femicida, xend = año), color = color_detalle) +
   geom_step(aes(y = edad_victima), color = color_principal, linewidth = 2, direction = "mid") +
   geom_step(aes(y = edad_femicida), color = color_negativo, linewidth = 2, direction = "mid") +
-  geom_text(aes(label = round(edad_victima, 1), y = edad_victima), size = 3, color = color_principal, nudge_y = -0.5) +
-  geom_text(aes(label = round(edad_femicida, 1), y = edad_femicida), size = 3, color = color_negativo, nudge_y = +0.5) +
+  geom_text(aes(label = round(edad_victima, 1), y = edad_victima), 
+            size = 3, alpha = .7, color = color_principal, nudge_y = -0.5) +
+  geom_text(aes(label = round(edad_femicida, 1), y = edad_femicida), 
+            size = 3, alpha = .7, color = color_negativo, nudge_y = +0.5) +
+  scale_x_continuous(breaks = 2010:2024) +
   tema_fondo +
-  tema_texto
+  tema_texto +
+  labs(y = "Edad del femicida en relación con edad de la víctima", x = NULL)
 
 
 

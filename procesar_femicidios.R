@@ -28,7 +28,9 @@ datos_2 <- datos |>
          fecha_4 = dmy(fecha_3)) |> 
   mutate(fecha_femicidio = if_else(is.na(fecha_2) & !is.na(fecha_4), fecha_4, fecha_2)) |> 
   mutate(año = year(fecha_femicidio)) |>
-  select(-fecha, -fecha_2, -fecha_3, -fecha_4)
+  select(-fecha, -fecha_2, -fecha_3, -fecha_4) |> 
+  mutate(informacion_medios_1 = str_remove(informacion_medios_1, " .*"),
+         informacion_medios_2 = str_remove(informacion_medios_2, " .*"))
 
 ## edades ----
 datos_3 <- datos_2 |>
@@ -76,7 +78,10 @@ datos_4 <- datos_3 |>
   mutate(ocupacion_victima = if_else(is.na(ocupacion_victima) & !is.na(ocupacion), ocupacion, ocupacion_victima),
          ocupacion_femicida = if_else(is.na(ocupacion_femicida) & !is.na(ocupacion_2), ocupacion_2, ocupacion_femicida),
          ocupacion_victima = str_to_sentence(ocupacion_victima),
-         ocupacion_femicida = str_to_sentence(ocupacion_femicida)) |> 
+         ocupacion_femicida = str_to_sentence(ocupacion_femicida),
+         ocupacion_victima = if_else(is.na(ocupacion_victima), "Desconocida", ocupacion_victima),
+         ocupacion_femicida = if_else(is.na(ocupacion_femicida), "Desconocida", ocupacion_femicida)
+         ) |> 
   select(-ocupacion, -ocupacion_2) |> 
   #agresiones
   mutate(forma_de_agresion = tolower(forma_de_agresion),
@@ -128,9 +133,16 @@ datos_4 <- datos_3 |>
   #catgegoria reducida
   mutate(categoria_femicidio_2 = str_replace(categoria_femicidio, "Desconocido", "Femicidio"),
          categoria_femicidio_2 = str_replace(categoria_femicidio_2, "Femicidio íntimo familiar", "Femicidio íntimo")) |> 
-  mutate(categoria_femicidio_2 = fct_lump(categoria_femicidio_2, prop = 0.005, other_level = "Femicidio"))
+  mutate(categoria_femicidio_2 = fct_lump(categoria_femicidio_2, prop = 0.005, other_level = "Femicidio")) |> 
+  #relacion
+  mutate(relacion_victima_femicida = case_when(str_detect(relacion_victima_femicida, "Desconocido") ~ "Desconocida",
+                                               is.na(relacion_victima_femicida) ~ "Desconocida",
+                                               .default = relacion_victima_femicida))
   #subcategoria
   # mutate(subcategoria_femicidio = case_when(str_detect(categoria_femicidio, "Femicicio
+
+
+
 
 # datos_4 |> count(categoria_femicidio) |> arrange(desc(n))  
 # datos_4 |> count(categoria_femicidio_2) |> arrange(desc(n))

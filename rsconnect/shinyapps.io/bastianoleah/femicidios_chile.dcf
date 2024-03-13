@@ -1,0 +1,12 @@
+name: femicidios_chile
+title: femicidios_chile
+username: bastianoleah
+account: bastianoleah
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 11475750
+bundleId:
+url: https://bastianoleah.shinyapps.io/femicidios_chile/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
