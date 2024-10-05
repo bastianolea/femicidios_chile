@@ -63,7 +63,7 @@ planillas <- map(registro_enlaces, ~{
 # descargar datos 2024 ----
 # porque esta tabla viene en otro formato, debe descargarse distinto
 library(googledrive)
-drive_download(registro_enlaces[15], path = "datos/femicidios_2024.xlsx")
+drive_download(registro_enlaces[15], path = "datos/femicidios_2024.xlsx", overwrite = TRUE)
 
 
 femicidios_2024 <- readxl::read_excel("datos/femicidios_2024.xlsx")

@@ -13,7 +13,7 @@ archivos <- dir_ls("datos", regexp = "xlsx") |> str_subset("consolidado", negate
 
 datos <- map(archivos, ~{
   readxl::read_xlsx(.x)
-  }) |> 
+}) |> 
   list_rbind()
 
 
@@ -70,7 +70,7 @@ datos_3 <- datos_2 |>
 # datos_3 |> 
 #   filter(nchar(edad_femicida) >= 3) |> 
 #   select(edad_femicida) |> 
-  
+
 
 # categóricas ----
 datos_4 <- datos_3 |> 
@@ -81,7 +81,7 @@ datos_4 <- datos_3 |>
          ocupacion_femicida = str_to_sentence(ocupacion_femicida),
          ocupacion_victima = if_else(is.na(ocupacion_victima), "Desconocida", ocupacion_victima),
          ocupacion_femicida = if_else(is.na(ocupacion_femicida), "Desconocida", ocupacion_femicida)
-         ) |> 
+  ) |> 
   select(-ocupacion, -ocupacion_2) |> 
   #agresiones
   mutate(forma_de_agresion = tolower(forma_de_agresion),
@@ -124,7 +124,7 @@ datos_4 <- datos_3 |>
     categoria_femicidio = case_when(!is.na(categoria_red_chilena) ~ categoria_red_chilena,
                                     !is.na(categorias_red_chilena) ~ categorias_red_chilena,
                                     !is.na(tipificacion_red_chilena) ~ tipificacion_red_chilena)
-    ) |> 
+  ) |> 
   # count(categoria_femicidio) |> arrange(desc(n)) |> print()
   mutate(categoria_femicidio = str_to_sentence(categoria_femicidio),
          categoria_femicidio = str_remove(categoria_femicidio, " /.*")) |> 
@@ -138,8 +138,8 @@ datos_4 <- datos_3 |>
   mutate(relacion_victima_femicida = case_when(str_detect(relacion_victima_femicida, "Desconocido") ~ "Desconocida",
                                                is.na(relacion_victima_femicida) ~ "Desconocida",
                                                .default = relacion_victima_femicida))
-  #subcategoria
-  # mutate(subcategoria_femicidio = case_when(str_detect(categoria_femicidio, "Femicicio
+#subcategoria
+# mutate(subcategoria_femicidio = case_when(str_detect(categoria_femicidio, "Femicicio
 
 
 
@@ -148,7 +148,7 @@ datos_4 <- datos_3 |>
 # datos_4 |> count(categoria_femicidio_2) |> arrange(desc(n))
 
 # datos_4 |> group_by(año) |> count(categoria_femicidio_2, .drop = F) |> arrange(desc(n)) |> print(n=Inf)
-  
+
 # datos_4 |> filter(año == max(año, na.rm=T)) |> dplyr::count(edad_victima)
 # datos_4 |> filter(año == max(año, na.rm=T)) |> dplyr::count(edad_femicida)
 # 
@@ -181,11 +181,153 @@ datos_5 <- datos_4 |>
   mutate(fecha_femicidio = if_else(nombre_victima == "Rosa Elena Letelier López",
                                    dmy("01-03-2012"), fecha_femicidio),
          año = if_else(nombre_victima == "Rosa Elena Letelier López",
-                                   2012, año)
-         )
-                                     
+                       2012, año)
+  )
+
+
+# lugares y comunas ----
+
+# cargar comunas
+cut_comunas <- readr::read_csv2("datos/comunas_chile_cut.csv")
+
+# crear id único para cada caso
+datos_5b <- datos_5 |> 
+  mutate(id2 = 1:n())
+
+## casos con comuna ----
+match_comuna <- datos_5b |>
+  select(-region) |> 
+  # select(fecha_femicidio, informacion_sobre_el_hecho, lugar, comuna) |> 
+  left_join(cut_comunas,
+            by = join_by(comuna == comuna))
+
+con_comuna <- match_comuna |> 
+  filter(!is.na(cut_comuna))
+
+# casos sin comuna
+sin_comuna <- match_comuna |> 
+  filter(is.na(cut_comuna))  
+
+## casos con comuna en variable lugar ----
+match_lugar <- sin_comuna |> 
+  select(-region, -cut_region, -cut_comuna) |> 
+  left_join(cut_comunas,
+            by = join_by(lugar == comuna))
+
+con_match_lugar <- match_lugar |> 
+  filter(!is.na(cut_comuna))
+
+# casos sin comuna en variable lugar
+sin_match_lugar <- match_lugar |> 
+  filter(is.na(cut_comuna))
+
+# comunas no reconocidas
+sin_match_lugar |> pull(lugar) |> unique()
+
+sin_lugar <- sin_match_lugar |> 
+  filter(is.na(lugar))
+
+## comuna mencionada en información ----
+match_informacion <- sin_lugar |>
+  select(-cut_comuna, -cut_region) |> 
+  mutate(comuna = case_when(str_detect(informacion_sobre_el_hecho, "Playa Negra") ~ "Penco",
+                            str_detect(informacion_sobre_el_hecho, "Concepción") ~ "Concepción",
+                            str_detect(informacion_sobre_el_hecho, "La Huayca") ~ "Iquique",
+                            str_detect(informacion_sobre_el_hecho, "Cerro Chuño") ~ "Arica",
+                            str_detect(informacion_sobre_el_hecho, "Antogafasta") ~ "Antofagasta",
+                            str_detect(informacion_sobre_el_hecho, "toma Porvenir") ~ "Alto Hospicio",
+                            str_detect(informacion_sobre_el_hecho, "Victoria") ~ "Victoria",
+                            str_detect(informacion_sobre_el_hecho, "Pichilemu") ~ "Pichilemu",
+                            str_detect(informacion_sobre_el_hecho, "río Aconcagua") ~ "Valparaíso",
+                            str_detect(informacion_sobre_el_hecho, "Constitución") ~ "Constitución",
+                            str_detect(informacion_sobre_el_hecho, "Zuñiga") ~ "San Vicente",
+                            str_detect(informacion_sobre_el_hecho, "Puerto Montt") ~ "Puerto Montt",
+                            str_detect(informacion_sobre_el_hecho, "San Pedro") ~ "San Pedro de la Paz",
+                            str_detect(informacion_sobre_el_hecho, "Calama") ~ "Calama",
+                            str_detect(informacion_sobre_el_hecho, "El Tume") ~ "Villarrica",
+                            str_detect(informacion_sobre_el_hecho, "Cesfam Pedro del Río") ~ "Concepción",
+                            str_detect(informacion_sobre_el_hecho, "Renaico") ~ "Renaico",
+                            str_detect(informacion_sobre_el_hecho, "Metrenco") ~ "Padre Las Casas",
+                            str_detect(informacion_sobre_el_hecho, "Posta Central") ~ "Santiago",
+                            str_detect(informacion_sobre_el_hecho, "Antonio Cabrera Santiago") ~ "Santiago",
+                            str_detect(informacion_sobre_el_hecho, "Osorno") ~ "Osorno")) |> 
+  select(-region) |> 
+  left_join(cut_comunas,
+            by = join_by(comuna == comuna)) |> 
+  filter(!is.na(cut_comuna))
+
+## comuna manualmente corregida ----
+match_manual <- sin_match_lugar |> 
+  select(-cut_comuna, -cut_region, -region) |> 
+  mutate(comuna = case_match(lugar, 
+                             "Aysén" ~ "Aisén", 
+                             "Los Ángeles" ~ "Los Angeles", 
+                             "Tal Tal" ~ "Taltal", 
+                             "Padre las Casas" ~ "Padre Las Casas",
+                             "Coyhaique" ~ "Coihaique",
+                             "Alhue" ~ "Alhué",
+                             "Concon" ~ "Concón",
+                             "El Olivar" ~ "Olivar",
+                             "Macúl" ~ "Macul",
+                             "Valparaiso" ~ "Valparaíso",
+                             "Llay Llay" ~ "Llaillay",
+                             "Trehuaco" ~ "Treguaco",
+                             "Neltume" ~ "Panguipulli",
+                             "Entre Lagos" ~ "Puyehue",
+                             "Rapel" ~ "Navidad",
+                             "Huentelolen" ~ "Tirúa",
+                             "Puerto Natales" ~ "Natales",
+                             "San Francisco de Mostazal" ~ "Mostazal",
+                             "San José de la Mariquina" ~ "Mariquina",
+                             "Santiago Centro" ~ "Santiago",
+                             "Lontué" ~ "Molina",
+                             "Reinaco" ~ "Renaico",
+                             "Paipote" ~ "Copiapó",
+                             "Labranza" ~ "Temuco",
+                             "Puerto Cisnes" ~ "Cisnes",
+                             "Batuco" ~ "Lampa",
+                             "Rallenco" ~ "Panguipulli",
+                             "San Vicente de Tagua Tagua" ~ "San Vicente",
+                             "Hornopirén" ~ "Hualaihué",
+                             "Colín" ~ "Maule",
+                             "Araucanía" ~ "Temuco",
+                             "Coñaripe" ~ "Panguipulli",
+                             "Rosario" ~ "Rengo",
+                             "La Calera" ~ "Calera",
+                             "Rio Negro" ~ "Río Negro",
+                             "Puerto Saavedra" ~ "Curacautín",
+                             "La Granja / Copiapó" ~ "La Granja",
+                             "Puerto Aysen" ~ "Aisén",
+                             "Liquiñe" ~ "Panguipulli",
+                             "Curanipe" ~ "Pelluhue",
+                             .default = lugar)) |> 
+  left_join(cut_comunas,
+            by = join_by(comuna == comuna)) |> 
+  filter(!is.na(cut_comuna))
+
+# cut_comunas |> 
+#   filter(str_detect(comuna, "Pichilemu"))
+
+
+## casos sin datos ----
+sin_ningun_match <- datos_5b |> 
+  filter(!id2 %in% unique(datos_6$id2))
+
+
+## unir ----
+datos_6 <- bind_rows(con_comuna,
+                     con_match_lugar,
+                     match_informacion,
+                     match_manual,
+                     sin_ningun_match) |> 
+  relocate(lugar, comuna, region, .after = nombre_victima) |> 
+  select(-id2)
+
+
+datos_6
+
+
 
 # guardar ----
-writexl::write_xlsx(datos_5, "datos/femicidios_chile_consolidado.xlsx")
-arrow::write_parquet(datos_5, "datos/femicidios_chile_consolidado.parquet")
-arrow::write_parquet(datos_5, "app/femicidios_chile_consolidado.parquet")
+writexl::write_xlsx(datos_6, "datos/femicidios_chile_consolidado.xlsx")
+arrow::write_parquet(datos_6, "datos/femicidios_chile_consolidado.parquet")
