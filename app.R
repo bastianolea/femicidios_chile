@@ -125,6 +125,13 @@ ui <- fluidPage(
          .open = "{{", .close = "}}")
   ),
   
+  tags$style(
+    glue("h4 {
+      font-size: 120%;
+    }",
+         .open = "{{", .close = "}}")
+  ),
+  
   
   
   ## header ----
@@ -165,35 +172,30 @@ ui <- fluidPage(
                                 h3("Femicidios georeferenciados")
                          ),
                          column(4,
-                                plotOutput("mapa_femicidios_pais", height = 500) |> withSpinner(),
-                                hr()
+                                plotOutput("mapa_femicidios_pais", height = 1500) |> withSpinner()
                          ),
                          column(8,
                                 plotOutput("barras_femicidios_region", height = 500) |> withSpinner(),
-                                hr()
-                         )
-                       ),
-                       
-                       fluidRow(
-                         column(12,
-                                h3("Femicidios por región"),
+                                hr(),
+                         
+                                h4("Femicidios por región"),
                                 selectInput("mapa_regiones",
-                                            "Seleccione una región",
-                                            # choices = unique(femicidios$region)
+                                            NULL,
                                             choices = c("Arica y Parinacota", "Tarapacá", "Antofagasta", "Atacama", 
                                                         "Coquimbo", "Valparaíso", "Metropolitana de Santiago", "Libertador Gral. Bernardo O'Higgins", 
                                                         "Maule", "Ñuble", "Biobío", "La Araucanía", "Los Ríos", "Los Lagos", 
                                                         "Aysén del General Carlos Ibáñez del Campo", "Magallanes y de la Antártica Chilena"
                                             ),
                                             selected = "Metropolitana de Santiago"
-                                )
-                         ),
-                         column(6,
+                                ),
+                         
                                 plotOutput("mapa_femicidios_region", height = 500) |> withSpinner(),
-                                hr()
+                                
+                                h4("Femicidios por comuna"),
+                                plotOutput("barras_femicidios_comuna", height = 400) |> withSpinner()
+                                
                          ),
-                         column(6,
-                                plotOutput("barras_femicidios_comuna", height = 500) |> withSpinner(),
+                         column(12,
                                 hr()
                          )
                        ),
@@ -589,7 +591,7 @@ server <- function(input, output) {
                                                      "15", "1", "2", "3", "4", "5", "13", "6", "7", "16",
                                                      "8", "9", "14", "10", "11", "12")) |> 
       mutate(region_orden = as.numeric(cut_region_orden)) |> 
-      mutate(region = stringr::str_wrap(region, 24),
+      mutate(region = stringr::str_wrap(region, 28),
              region = forcats::fct_reorder(region, region_orden)) |> 
       arrange(region) |> 
       mutate(region = forcats::fct_rev(region))
