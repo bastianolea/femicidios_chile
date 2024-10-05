@@ -309,25 +309,45 @@ match_manual <- sin_match_lugar |>
 #   filter(str_detect(comuna, "Pichilemu"))
 
 
-## casos sin datos ----
-sin_ningun_match <- datos_5b |> 
-  filter(!id2 %in% unique(datos_6$id2))
-
-
 ## unir ----
 datos_6 <- bind_rows(con_comuna,
                      con_match_lugar,
                      match_informacion,
-                     match_manual,
-                     sin_ningun_match) |> 
-  relocate(lugar, comuna, region, .after = nombre_victima) |> 
-  select(-id2)
+                     match_manual) |> 
+  relocate(lugar, comuna, region, .after = nombre_victima)
 
 
 datos_6
 
+## casos sin datos ----
+sin_ningun_match <- datos_5b |> 
+  filter(!id2 %in% unique(datos_6$id2))
 
+# por región ----
+match_region <- sin_ningun_match |> 
+  # select(lugar, comuna, region) |> 
+  mutate(comuna = case_when(region == "Metropolitana" ~ "Santiago")) |> 
+  select(-region) |> 
+  left_join(cut_comunas,
+            by = join_by(comuna == comuna))
+# y se dejan los sin match 
+
+# sin_ningun_match_2 <- sin_ningun_match |> 
+#   filter(!id2 %in% unique(match_region$id2))
+
+datos_7 <- bind_rows(con_comuna,
+                     con_match_lugar,
+                     match_informacion,
+                     match_manual,
+                     match_region) |> 
+  distinct(id2, .keep_all = TRUE) |> 
+  select(-region) |> 
+  left_join(cut_comunas |> select(cut_comuna, region),
+            by = join_by(cut_comuna)) |> 
+  relocate(lugar, comuna, region, .after = nombre_victima) |> 
+  select(-id2) |> 
+  arrange(desc(fecha_femicidio))
 
 # guardar ----
-writexl::write_xlsx(datos_6, "datos/femicidios_chile_consolidado.xlsx")
-arrow::write_parquet(datos_6, "datos/femicidios_chile_consolidado.parquet")
+writexl::write_xlsx(datos_7, "datos/femicidios_chile_consolidado.xlsx")
+arrow::write_parquet(datos_7, "datos/femicidios_chile_consolidado.parquet")
