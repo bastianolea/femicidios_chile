@@ -1,10 +1,18 @@
+library(tidyverse)
 library(chilemapas)
 library(ggplot2)
 
+color_fondo = "#262626"
+color_detalle = "#757575" #"#262626" |> lighten(.4)
+color_detalle_oscuro = "#303030" #color_detalle |> darken(.6)
+color_na = "#4C4C4C" #color_fondo |> lighten(.2)
+color_texto = "#A1A1A1" #color_fondo |> lighten(.6)
+color_texto_claro = "#C6C6C6" #color_texto |> lighten(.4)
 color_principal = "#f7d03a"
 color_intermedio = "#A36F01"
-color_secundario = "#332901" 
+color_secundario = "#332901" #color_principal |> darken(.8)
 color_negativo = "#EB3737"
+color_negativo_intermedio = "#EB802A"
 
 datos_7 <- arrow::read_parquet("datos/femicidios_chile_consolidado.parquet")
 cut_comunas <- readr::read_csv2("datos/comunas_chile_cut.csv")
@@ -59,9 +67,54 @@ mapa_datos |>
   theme_void()
 
 
-readr::write_rds(mapa_comunas, "mapa_comunas.rds")
-readr::write_rds(mapa_regiones, "mapa_regiones.rds")
+# tipografías para ragg/sysfonts
+library(showtext)
+sysfonts::font_add_google("Archivo Narrow", "Archivo Narrow", db_cache = TRUE)
+showtext_auto()
 
+mapa_femicidios <- mapa_datos |> 
+  ggplot() +
+  # mapa de chile
+  geom_sf(data = mapa_regiones,
+          aes(geometry = geometry), 
+          fill = color_principal, color = color_fondo, alpha = 1) +
+  # puntos
+  geom_sf(aes(geometry = punto, 
+              size = n),
+          alpha = 0.6, color = color_negativo) +
+  coord_sf(xlim = c(-76*1.03, -66.5*0.97), expand = TRUE) +
+  # guides(size = guide_legend(position = "bottom")) +
+  guides(size = guide_none()) +
+  theme_void() +
+  list(theme(plot.background = element_rect(fill = color_fondo, linewidth = 0), 
+             panel.background = element_rect(fill = color_fondo, linewidth = 0),
+             panel.grid = element_blank(), 
+             legend.background = element_rect(fill = color_fondo,linewidth = 0)
+  )) +
+  annotate("text", x = -78.5, y = -17.5, label = "Femicidios en Chile",
+           color = color_principal, size = 10,
+           family = "Archivo Narrow", fontface = "bold", hjust = 0) +
+  annotate("text", x = -78.5, y = -18.5, 
+           label = str_wrap("Visualización de datos del registro de femicidios realizado por la Red Chilena contra la Violencia hacia las Mujeres, desde 2010 en adelante.",
+                            24),
+           size = 8,
+           lineheight = .3,
+           color = color_detalle,
+           family = "Archivo Narrow", face = "bold", hjust = 0, vjust = 1) +
+  labs(caption = "Diseñado y programado por Bastián Olea Herrera.\nFuente de los datos: Red Chilena contra la Violencia hacia las Mujeres") +
+  theme(plot.caption = element_text(family = "Archivo Narrow", 
+                                  color = color_detalle, size = 14,
+                                  lineheight = .3,
+                                  margin = margin(t = -20, r = -6, b = 6)))
+  # ggview::canvas(810, 2000, units = "px")
+
+# install.packages("ggview")
+# library(ggview)
+mapa_femicidios
+
+ggsave(mapa_femicidios, filename = "graficos/mapa_femicidios_chile.jpg",
+       width = 810, height = 2000, units = "px")
+       # width = 5, height = 8, scale = 0.3)
 
 # tabla ----
 

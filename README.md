@@ -9,13 +9,17 @@ La georeferenciación de los datos se basa en la información de localidad o com
 
 Los datos se encuentran actualizados a octubre de 2024.
 
-![](pantallazos/poster_femicidios_chile_2024.jpg)
-
 Sobre los femicidios, la Red Chilena contra la Violencia hacia las Mujeres plantea:
 
 > La teoría feminista conceptualiza el femicidio como un crimen misógino que refleja, en grado extremo, el sentido de propiedad, dominación y control que ejercen los hombres hacia las mujeres en las sociedades patriarcales.
 
 [Accede a la aplicación web en este enlace](https://bastianoleah.shinyapps.io/femicidios_chile/)
+
+## Mapa georeferenciado de femicidios en Chile
+![](graficos/mapa_femicidios_chile.jpg)
+
+## Tabla de femicidios en Chile, año 2024
+![](graficos/tabla_femicidios_2024.png)
 
 ### Fuentes
 - [Red Chilena contra la Violencia hacia las Mujeres](www.nomasviolenciacontramujeres.cl), quienes en su exhaustiva recopilación plantean "esta base de datos es elaborada y administrada por la Red Chilena contra la Violencia hacia las Mujeres. El uso de los datos está a disposición de todas, todos y todes, citando la fuente." Puedes acceder al registro realizado por la Red en [este enlace.](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/)
