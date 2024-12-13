@@ -22,7 +22,7 @@ mapa_comunas <- readr::read_rds("mapa_comunas.rds")
 mapa_regiones <- readr::read_rds("mapa_regiones.rds")
 cut_comunas <- readr::read_csv2("datos/comunas_chile_cut.csv", show_col_types = F)
 
-año_max = 2025
+año_max = 2024
 
 # colores ----
 color_fondo = "#262626"
@@ -169,7 +169,17 @@ ui <- fluidPage(
                        ## mapas ----
                        fluidRow(
                          column(12,
-                                h3("Femicidios georeferenciados")
+                                h3("Femicidios georeferenciados"),
+                                
+                                div(style = css(margin = "auto", text_align = "center"),
+                                    div(style = css(margin = "auto", max_width = "400px"),
+                                        sliderInput("años_mapas",
+                                                    label = NULL,
+                                                    min = 2010, max = año_max,
+                                                    value = c(2010, año_max),
+                                                    sep = "", width = "100%")
+                                    )
+                                )
                          ),
                          column(4,
                                 plotOutput("mapa_femicidios_pais", height = 1500) |> withSpinner()
@@ -327,7 +337,7 @@ server <- function(input, output) {
   ## datos ----
   femicidios_anual <- reactive({
     femicidios |> 
-      filter(año < año_max) |> 
+      filter(año <= año_max) |> 
       group_by(año) |> 
       summarize(victimas = n())
   })
@@ -357,7 +367,7 @@ server <- function(input, output) {
   ## barras violencia sexual ----
   output$barras_violencia_sexual <- renderPlot({
     femicidios |> 
-      filter(año < año_max) |> 
+      filter(año <= año_max) |> 
       select(año, violencia_sexual) |> 
       mutate(violencia_sexual = case_when(violencia_sexual %in% c("Violencia sexual", "Presunta violencia sexual") ~ violencia_sexual,
                                           .default = "Otros casos"),
@@ -545,7 +555,8 @@ server <- function(input, output) {
   ## mapas ----
   casos_comuna <- reactive({
     femicidios |> 
-      # filter(año == año_max) |> 
+      filter(año >= input$años_mapas[1],
+             año <= input$años_mapas[2]) |>
       # filter(año >= 2020) |> 
       group_by(comuna, region, cut_comuna) |> 
       summarize(n = n())
@@ -614,7 +625,8 @@ server <- function(input, output) {
       geom_text(aes(label = n), 
                 hjust = etiqueta_pos,
                 nudge_x = etiqueta_x, 
-                color = etiqueta_color) +
+                color = etiqueta_color,
+                size = 3) +
       scale_x_continuous(expand = expansion(c(0, 0))) +
       theme_minimal() +
       theme(panel.grid.major.y = element_blank()) +
@@ -758,10 +770,11 @@ server <- function(input, output) {
       ggplot(aes(x = p, y = comuna)) +
       geom_col(width = ancho_col,
                fill = color_principal) +
-      geom_text(aes(label = scales::percent(p, accuracy = 0.1)), 
+      geom_text(aes(label = glue("{n} ({scales::percent(p, accuracy = 0.1)})")), 
                 hjust = etiqueta_pos,
                 nudge_x = etiqueta_x, 
-                color = etiqueta_color) +
+                color = etiqueta_color,
+                size = 3) +
       scale_x_continuous(expand = expansion(c(0, 0.1)),
                          # breaks = \(x) seq(ceiling(x[1]), floor(x[2]), by = 1)
                          breaks = scales::breaks_pretty(),
