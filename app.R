@@ -17,6 +17,7 @@ options(shiny.useragg = TRUE)
 
 # datos ----
 femicidios <- arrow::read_parquet("datos/femicidios_chile_consolidado.parquet")
+sernameg <- readRDS("datos_sernameg/sernameg_femicidios_consumados.rds")
 
 mapa_comunas <- readr::read_rds("mapa_comunas.rds")
 mapa_regiones <- readr::read_rds("mapa_regiones.rds")
@@ -79,6 +80,8 @@ tema_texto <- list(theme(axis.text = element_text(color = color_texto),
                          legend.title = element_text(face = "bold"),
 )
 )
+
+lineas_x <- list(theme(panel.grid.major.x = element_line(color = color_detalle_oscuro)))
 
 
 options(spinner.type = 8, spinner.color = color_principal)
@@ -162,6 +165,17 @@ ui <- fluidPage(
                          column(12,
                                 h3("Casos anuales de femicidios"),
                                 plotOutput("grafico_historico") |> withSpinner(),
+                                
+                                div(style = css(font_size = "90%"),
+                                    "En este gráfico, la", 
+                                    span("área amarilla", style = css(color = color_principal)), 
+                                    "representa los casos anuales de femicidios registrados por la Red Chilena contra la Violencia hacia las Mujeres,", 
+                                    "mientras que la", 
+                                    span("línea roja", style = css(color = color_negativo)), 
+                                  "representa el conteo de femicidios consumados según el", 
+                                  a("Servicio Nacional de la Mujer y la Equidad de Género.", 
+                                    href = "https://www.sernameg.gob.cl/?page_id=27084")),
+                                # ),
                                 hr()
                          )
                        ),
@@ -170,6 +184,10 @@ ui <- fluidPage(
                        fluidRow(
                          column(12,
                                 h3("Femicidios georeferenciados"),
+                                
+                                div(style = css(font_size = "90%", margin_bottom = "18px"),
+                                    "En estos gráficos, los casos de femicidios reportados por la Red Chilena contra la Violencia hacia las Mujeres son ubicados geográficamente en la comuna del país donde fueron perpetrados. Puede usar el control deslizante para cambiar los años a considerar en las visualizaciones, y abajo puede elegir una región del país para visualizar."
+                                ),
                                 
                                 div(style = css(margin = "auto", text_align = "center"),
                                     div(style = css(margin = "auto", max_width = "400px"),
@@ -181,7 +199,7 @@ ui <- fluidPage(
                                     )
                                 )
                          ),
-                         column(4,
+                         column(4, style = css(margin_top = "-20px"),
                                 plotOutput("mapa_femicidios_pais", height = 1500) |> withSpinner()
                          ),
                          column(8,
@@ -243,23 +261,40 @@ ui <- fluidPage(
                        fluidRow(
                          column(12,
                                 h3("Femicidios por edad de la víctima y año del femicidio"),
-                                markdown("Cada punto corresponde a un femicidio, donde su altura indica la edad de la víctima, y el color de los puntos indica la diferencia de edad entre ella y el femicida"),
+                                div(style = css(font_size = "90%", margin_bottom = "10px"), 
+                                    "Cada punto corresponde a un femicidio, donde su altura indica la edad de la víctima, y el color de los puntos indica la diferencia de edad entre ella y el femicida"
+                                ),
                                 plotOutput("puntos_edad_2", height = 600) |> withSpinner(),
                                 hr()
                          )
                        ),
                        
+                       ## puntos femicida ----
                        fluidRow(
                          column(12,
                                 h3("Edades de femicidas, por año"),
+                                
+                                div(style = css(font_size = "90%", margin_bottom = "10px"), 
+                                    "En este gráfico, cada punto representa un femicida, y la posición del punto indica el año en que cometió el delito, y la edad que tuvo al momento de cometerlo."
+                                ),
+                                
                                 plotOutput("puntos_edad_femicida", height = 600) |> withSpinner(),
                                 hr()
                          )
                        ),
                        
+                       ## edades ----
                        fluidRow(
                          column(12,
                                 h3("Edades promedio de femicidas y víctimas, por año"),
+                                
+                                div(style = css(font_size = "90%", margin_bottom = "10px"), 
+                                                "Esta visualización muestra dos líneas, que en cada año se posicionan en la edad promedio que tuvieron las",
+                                                span("víctimas", style = css(color = color_principal)),
+                                                "y los",
+                                                span("victimarios", style = css(color = color_negativo)), 
+                                                "de Femicidios en Chile. El objetivo de esta visualización es mostrar las diferencias de edades promedio, qué indican una tendencia generalizada sobre Felicidades de edades superiores a sus víctimas."
+                                ),
                                 plotOutput("lineas_edad_1") |> withSpinner()
                          )
                        )
@@ -313,14 +348,14 @@ ui <- fluidPage(
   
   ## firma ----
   fluidRow(
-    column(12, style = "opacity: 1; font-size: 80%;",
+    column(12, style = "opacity: 1; font-size: 70%;",
            hr(),
            
-           markdown("Diseñado y programado por [Bastián Olea Herrera.](https://bastian.olea.biz) en [R](https://www.tidyverse.org) y [Shiny](https://shiny.posit.co)"),
+           markdown("Diseñado y programado por [Bastián Olea Herrera.](https://bastianolea.rbind.io)"),
            
+           markdown("Fuente de los datos: [registro de femicidios](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/) realizado por la [Red Chilena contra la Violencia hacia las Mujeres](www.nomasviolenciacontramujeres.cl), y datos de femicidios del [Servicio Nacional de la Mujer y Equidad de Género](https://www.sernameg.gob.cl/?page_id=27084)."),
+          
            markdown("Puedes explorar mis otras [aplicaciones interactivas sobre datos sociales en mi portafolio.](https://bastianolea.github.io/shiny_apps/)"),
-           
-           markdown("Fuente de los datos: [registro de femicidios](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/) realizado por la [Red Chilena contra la Violencia hacia las Mujeres](www.nomasviolenciacontramujeres.cl)"),
            
            markdown("Código de fuente de esta app y de la obtención de los datos [disponibles en GitHub.](https://github.com/bastianolea/femicidios_chile)"),
            
@@ -342,8 +377,17 @@ server <- function(input, output) {
       summarize(victimas = n())
   })
   
+  femicidios_anual_sernameg <- reactive({
+    sernameg |> 
+      summarize(sernameg = sum(femicidios_consumados), 
+                .by = año)
+  })
+  
   ## gráfico area principal ----
   output$grafico_historico <- renderPlot({
+    # browser()
+    # dev.new()
+    
     femicidios_anual() |>
       ggplot(aes(año, victimas)) +
       geom_area(fill = gradiente_amarillo) +
@@ -352,6 +396,14 @@ server <- function(input, output) {
                 color = color_texto_claro, size = 4, fontface = "bold") +
       # geom_line(stat = "smooth", method = "lm", color = color_fondo, linewidth = 2, alpha = .8, lineend = "round") +
       # geom_line(stat = "smooth", method = "lm", color = color_negativo, linewidth = 1, alpha = .8) +
+      geom_line(data = femicidios_anual_sernameg(),
+                aes(y = sernameg),
+                linewidth = 1.7, alpha = 0.3,
+                color = color_fondo) +
+      geom_line(data = femicidios_anual_sernameg(),
+                aes(y = sernameg),
+                linewidth = 0.9,
+                color = color_negativo) +
       coord_cartesian(clip = "off") +
       scale_y_continuous(expand = expansion(c(0.01, 0)), breaks = seq(10, 70, by = 10)) +
       scale_x_continuous(breaks = 2010:año_max, expand = expansion(0.01)) +
@@ -418,7 +470,7 @@ server <- function(input, output) {
       mutate(categoria_femicidio_2 = fct_relevel(categoria_femicidio_2, "Femicidio íntimo", 
                                                  after = 99)) |> 
       ggplot(aes(año, n, fill = categoria_femicidio_2, col = categoria_femicidio_2)) +
-      geom_col(width = 0.6, color = alpha(color_fondo, .2)) +
+      geom_col(width = 0.5, color = alpha(color_fondo, .2)) +
       geom_point(size = NA) +
       # geom_area(data = tibble(año = 2009:2024, n = 60), outline.type = "lower", color = color_fondo,
       #           fill = gradiente_sombra, alpha = 1) +
@@ -431,9 +483,11 @@ server <- function(input, output) {
       tema_fondo +
       tema_texto +
       theme(axis.text.y = element_text(margin = margin(l = 4, r = 4))) +
-      labs(y = "Femicidios según categoría", n = NULL, color = "Categorías de femicidio") +
+      labs(y = "Femicidios según categoría", x = NULL, color = NULL) +
       guides(fill = guide_none(),
-             color = guide_legend(override.aes = list(size = 4, fill = NA, linewidth = NA)))
+             color = guide_legend(override.aes = list(size = 3, fill = NA, linewidth = NA))) +
+      theme(legend.text = element_text(margin = margin(l = 0)),
+            legend.margin = margin(l = -3))
     
   }, res = .resolucion) |> 
     bindCache()
@@ -471,7 +525,7 @@ server <- function(input, output) {
       tema_texto +
       labs(y = "Edad de la víctima al momento del femicidio",
            x = "Edad del femicida al ejecutar el crimen", 
-           color = "Diferencia de edad\nentre femicida y víctima") +
+           color = "Diferencia de edad\nentre femicida y\nvíctima") +
       theme(panel.grid.major = element_line(color = color_detalle_oscuro)) +
       theme(legend.title = element_text(hjust = 1),
             legend.text = element_text(margin = margin(l = 4, r = 0)),
@@ -525,7 +579,8 @@ server <- function(input, output) {
       scale_y_continuous(expand = expansion(0.01), 
                          breaks = c(18, 25, 35, 45, 55, 65, 75, 85)) +
       tema_fondo +
-      tema_texto
+      tema_texto +
+      labs(x = "", y = "Edad del femicida")
   }, res = .resolucion) |> 
     bindCache()
   
@@ -546,7 +601,8 @@ server <- function(input, output) {
       scale_x_continuous(breaks = 2010:año_max) +
       tema_fondo +
       tema_texto +
-      labs(y = "Edad del femicida en relación con edad de la víctima", x = NULL)
+      lineas_x +
+      labs(y = "Edad del femicida en relación\ncon edad de la víctima", x = NULL)
   }, res = .resolucion) |> 
     bindCache()
   
@@ -633,7 +689,8 @@ server <- function(input, output) {
       labs(y = NULL, x = "Víctimas por región") +
       theme_minimal() +
       tema_fondo +
-      tema_texto
+      tema_texto +
+      lineas_x
   }, res = .resolucion)
   
   
@@ -668,6 +725,14 @@ server <- function(input, output) {
     #   coord_sf(expand = FALSE,
     #            xlim = c(-71.9, -69.9),
     #            ylim = c(-34, -32))
+    # browser()
+    
+    rango_min <- ifelse(numero_region == "13",
+                    2, 6)
+    
+    transparencia <- ifelse(numero_region == "13",
+                        .3, .6)
+    # rango <- c(6, 15)
     
     mapa <- mapa_datos_region() |> 
       ggplot() +
@@ -678,14 +743,14 @@ server <- function(input, output) {
       # puntos
       geom_sf(aes(geometry = punto, 
                   size = n),
-              alpha = 0.5, color = color_negativo) +
+              alpha = transparencia, color = color_negativo) +
       geom_sf_text(aes(geometry = punto, 
                        label = nombre_comuna), 
+                   size = 2,
                    color = color_fondo, check_overlap = T) +
       coord_sf(expand = FALSE) +
-      # guides(size = guide_legend(position = "bottom")) +
       guides(size = guide_none()) +
-      scale_size(range = c(6, 15)) +
+      scale_size(range = c(rango_min, 15)) +
       theme_void() +
       tema_fondo
     
@@ -785,7 +850,8 @@ server <- function(input, output) {
       labs(y = NULL, x = "Víctimas por comuna") +
       theme_minimal() +
       tema_fondo +
-      tema_texto
+      tema_texto +
+      lineas_x
   }, res = .resolucion)
   
   
