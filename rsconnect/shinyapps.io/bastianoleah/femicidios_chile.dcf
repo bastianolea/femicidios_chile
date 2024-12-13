@@ -5,7 +5,7 @@ account: bastianoleah
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 11475750
-bundleId: 9185395
+bundleId: 9518226
 url: https://bastianoleah.shinyapps.io/femicidios_chile/
 version: 1
 asMultiple: FALSE
