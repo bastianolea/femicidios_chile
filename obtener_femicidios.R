@@ -72,30 +72,18 @@ femicidios_2024 <- readxl::read_excel("datos/femicidios_2024.xlsx")
 planillas_2 <- list(planillas, femicidios_2024) |> 
   list_flatten()
 
+
 # limpiar planillas y guardar en excel ----
 
-# fechas <- map(datos[[2]], ~{
-#   if (class(.x)[1] == "POSIXct") {
-#     return(.x)
-#   } else {
-#     return(NULL)
-#   }
-# })
-# fechas_2 <- fechas |> unlist() |> as_datetime()
-# planillas[[10]]
-
-femicidios_2024 |> 
-  janitor::clean_names() |> 
-  select(femicidios_2024) |> 
-  slice(4:8) |> 
-  mutate(fecha = janitor::excel_numeric_to_date(as.numeric(femicidios_2024)))
+# # arreglar fechas de excel
+# femicidios_2024 |> 
+#   janitor::clean_names() |> 
+#   select(femicidios_2024) |> 
+#   slice(4:8) |> 
+#   mutate(fecha = janitor::excel_numeric_to_date(as.numeric(femicidios_2024)))
 
 
 planillas_limpias <- map(planillas_2, ~{
-  # .x = planillas[[12]] #tiene texto escrito despues de unas fechas
-  # .x = planillas[[10]]
-  # .x = planillas_2[[16]]
-  
   # message("limpiando ", .x)
   
   if (is.null(.x)) return(tibble())
@@ -139,6 +127,13 @@ planillas_limpias
 walk(planillas_limpias, ~{
   if (nrow(.x) > 1) {
     año <- .x |> select(fecha) |> pull() |> ymd() |> min(na.rm = T) |> year()
+    
+    if (!is.numeric(año) | año < 2010) {
+      warning("error en dato ", año)
+      return(NULL)
+    }
+    
+    message("guardando año ", año)
     writexl::write_xlsx(.x, glue("datos/femicidios_{año}.xlsx"))
   }
 })
