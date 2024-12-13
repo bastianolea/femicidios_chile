@@ -144,8 +144,8 @@ datos_4 <- datos_3 |>
 
 
 
-# datos_4 |> count(categoria_femicidio) |> arrange(desc(n))  
-# datos_4 |> count(categoria_femicidio_2) |> arrange(desc(n))
+# datos_4 |> count(categoria_femicidio) |> arrange(desc(n))
+datos_4 |> count(categoria_femicidio_2) |> arrange(desc(n))
 
 # datos_4 |> group_by(año) |> count(categoria_femicidio_2, .drop = F) |> arrange(desc(n)) |> print(n=Inf)
 
@@ -347,6 +347,23 @@ datos_7 <- bind_rows(con_comuna,
   relocate(lugar, comuna, region, .after = nombre_victima) |> 
   select(-id2) |> 
   arrange(desc(fecha_femicidio))
+
+
+
+# revisiones ----
+
+# misma cantidad de casos antes y después de procesamiento
+nrow(datos_2) == nrow(datos_7)
+
+# todos los datos con año
+!any(is.na(datos_7$año))
+
+# datos del año presentes
+max(datos_7$año) == year(today())
+
+datos_7 |> glimpse()
+
+
 
 # guardar ----
 writexl::write_xlsx(datos_7, "datos/femicidios_chile_consolidado.xlsx")
