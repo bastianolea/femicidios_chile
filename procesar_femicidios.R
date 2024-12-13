@@ -6,7 +6,7 @@ library(purrr)
 library(glue)
 library(lubridate)
 library(tidyr)
-
+library(textclean)
 
 # cargar planillas individuales ----
 archivos <- dir_ls("datos", regexp = "xlsx") |> str_subset("consolidado", negate = T)
@@ -188,7 +188,8 @@ datos_5 <- datos_4 |>
 # lugares y comunas ----
 
 # cargar comunas
-cut_comunas <- readr::read_csv2("datos/comunas_chile_cut.csv")
+cut_comunas <- readr::read_csv2("datos/comunas_chile_cut.csv") |> 
+  mutate(comuna_match = comuna |> strip() |> replace_non_ascii())
 
 # crear id único para cada caso
 datos_5b <- datos_5 |> 
@@ -197,9 +198,12 @@ datos_5b <- datos_5 |>
 ## casos con comuna ----
 match_comuna <- datos_5b |>
   select(-region) |> 
-  # select(fecha_femicidio, informacion_sobre_el_hecho, lugar, comuna) |> 
+  mutate(comuna_match = comuna |> strip() |> replace_non_ascii()) |> 
+  select(-comuna) |> 
   left_join(cut_comunas,
-            by = join_by(comuna == comuna))
+            by = join_by(comuna_match == comuna_match))
+
+glimpse(match_comuna)
 
 con_comuna <- match_comuna |> 
   filter(!is.na(cut_comuna))
@@ -208,11 +212,16 @@ con_comuna <- match_comuna |>
 sin_comuna <- match_comuna |> 
   filter(is.na(cut_comuna))  
 
+
+
 ## casos con comuna en variable lugar ----
 match_lugar <- sin_comuna |> 
-  select(-region, -cut_region, -cut_comuna) |> 
+  select(-region, -cut_region, -cut_comuna, -comuna) |> 
+  mutate(lugar_match = lugar |> strip() |> replace_non_ascii()) |> 
   left_join(cut_comunas,
-            by = join_by(lugar == comuna))
+            by = join_by(lugar_match == comuna_match))
+
+match_lugar |> glimpse()
 
 con_match_lugar <- match_lugar |> 
   filter(!is.na(cut_comuna))
@@ -229,7 +238,7 @@ sin_lugar <- sin_match_lugar |>
 
 ## comuna mencionada en información ----
 match_informacion <- sin_lugar |>
-  select(-cut_comuna, -cut_region) |> 
+  select(-cut_comuna, -cut_region, -comuna, -comuna_match) |> 
   mutate(comuna = case_when(str_detect(informacion_sobre_el_hecho, "Playa Negra") ~ "Penco",
                             str_detect(informacion_sobre_el_hecho, "Concepción") ~ "Concepción",
                             str_detect(informacion_sobre_el_hecho, "La Huayca") ~ "Iquique",
@@ -256,9 +265,13 @@ match_informacion <- sin_lugar |>
             by = join_by(comuna == comuna)) |> 
   filter(!is.na(cut_comuna))
 
+match_informacion |> glimpse()
+
+
+
 ## comuna manualmente corregida ----
 match_manual <- sin_match_lugar |> 
-  select(-cut_comuna, -cut_region, -region) |> 
+  select(-cut_comuna, -cut_region, -region, -comuna, -comuna_match) |> 
   mutate(comuna = case_match(lugar, 
                              "Aysén" ~ "Aisén", 
                              "Los Ángeles" ~ "Los Angeles", 
@@ -305,8 +318,10 @@ match_manual <- sin_match_lugar |>
             by = join_by(comuna == comuna)) |> 
   filter(!is.na(cut_comuna))
 
+match_manual |> glimpse()
 # cut_comunas |> 
 #   filter(str_detect(comuna, "Pichilemu"))
+
 
 
 ## unir ----
@@ -332,14 +347,25 @@ match_region <- sin_ningun_match |>
             by = join_by(comuna == comuna))
 # y se dejan los sin match 
 
+match_region |> glimpse()
+
 # sin_ningun_match_2 <- sin_ningun_match |> 
 #   filter(!id2 %in% unique(match_region$id2))
 
+
+
+# unir resultados ----
 datos_7 <- bind_rows(con_comuna,
                      con_match_lugar,
                      match_informacion,
                      match_manual,
-                     match_region) |> 
+                     match_region)
+
+datos_7 |> 
+  select(starts_with("comuna"))
+
+# ordenar resultados
+datos_8 <- datos_7 |> 
   distinct(id2, .keep_all = TRUE) |> 
   select(-region) |> 
   left_join(cut_comunas |> select(cut_comuna, region),
@@ -347,6 +373,13 @@ datos_7 <- bind_rows(con_comuna,
   relocate(lugar, comuna, region, .after = nombre_victima) |> 
   select(-id2) |> 
   arrange(desc(fecha_femicidio))
+
+
+
+# datos_7 |> 
+#   filter(region == "Metropolitana de Santiago") |> 
+#   select(fecha_femicidio, comuna, lugar, region) |> 
+#   filter(is.na(comuna))
 
 
 

@@ -699,7 +699,7 @@ server <- function(input, output) {
       summarize(n = sum(n), .groups = "drop") |> 
       # print(n=Inf)
       # filter(!is.na(comuna)) |> 
-      mutate(comuna = replace_na(comuna, "Sin información")) |> 
+      mutate(comuna = ifelse(is.na(comuna), "Sin información", comuna)) |> 
       # reducir comunas
       mutate(comuna = forcats::fct_lump_n(comuna, w = n, 
                                           n = 10, ties.method = "first",
