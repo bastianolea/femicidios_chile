@@ -45,6 +45,6 @@ Información sobre los scripts y orden de ejecución.
 - [Servicio Nacional de la Mujer y Equidad de Género](https://www.sernameg.gob.cl/?page_id=27084)
 
 
-![]("pantallazos/femicidios_1.jpg")
+![](pantallazos/femicidios_1.jpg)
 
-![]("pantallazos/femicidios_2.jpg")
+![](pantallazos/femicidios_2.jpg)
