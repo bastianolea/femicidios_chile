@@ -22,7 +22,7 @@ mapa_comunas <- readr::read_rds("mapa_comunas.rds")
 mapa_regiones <- readr::read_rds("mapa_regiones.rds")
 cut_comunas <- readr::read_csv2("datos/comunas_chile_cut.csv", show_col_types = F)
 
-año_max = 2024
+año_max = 2025
 
 # colores ----
 color_fondo = "#262626"
@@ -177,7 +177,7 @@ ui <- fluidPage(
                          column(8,
                                 plotOutput("barras_femicidios_region", height = 500) |> withSpinner(),
                                 hr(),
-                         
+                                
                                 h4("Femicidios por región"),
                                 selectInput("mapa_regiones",
                                             NULL,
@@ -188,10 +188,13 @@ ui <- fluidPage(
                                             ),
                                             selected = "Metropolitana de Santiago"
                                 ),
-                         
+                                
                                 plotOutput("mapa_femicidios_region", height = 500) |> withSpinner(),
                                 
                                 h4("Femicidios por comuna"),
+                                div(style = css(font_size = "80%"),
+                                    em("Nota: sólo incluye casos que tienen información de comuna donde se concretó el hecho, por lo que pueden ser menos casos de lo esperado.")
+                                ),
                                 plotOutput("barras_femicidios_comuna", height = 400) |> withSpinner()
                                 
                          ),
@@ -620,226 +623,260 @@ server <- function(input, output) {
       tema_fondo +
       tema_texto
   }, res = .resolucion)
-
-
-
-
-### mapa región ----
-mapa_datos_region <- reactive({
-  mapa_datos() |> 
-    filter(region == input$mapa_regiones)
-})
-
-output$mapa_femicidios_region <- renderPlot({
-  # browser()
   
-  numero_region <- unique(mapa_datos_region()$codigo_region)[1]
-  # numero_region = "05"
   
-  # mapa_region <- mapa_regiones |> filter(codigo_region == numero_region)
-  mapa_region <- mapa_comunas |> 
-    filter(codigo_region == numero_region) |> 
-    filter(!codigo_comuna %in% c(5104, 5201)) #excluir islas
   
-  # if (numero_region == "05") {
-  #   mapa_region <- mapa_region |> 
-  #   smoothr::drop_crumbs(geometry, threshold = units::set_units(30, km^2))
-  # }
   
-  # mapa_region |>
-  #   ggplot(aes(geometry = geometry)) +
-  #   geom_sf() +
-  #   # geom_sf_text(aes(label = nombre_comuna)) +
-  #   coord_sf(expand = FALSE,
-  #            xlim = c(-71.9, -69.9),
-  #            ylim = c(-34, -32))
+  ### mapa región ----
+  mapa_datos_region <- reactive({
+    mapa_datos() |> 
+      filter(region == input$mapa_regiones)
+  })
   
-  mapa <- mapa_datos_region() |> 
-    ggplot() +
-    # mapa de chile
-    geom_sf(data = mapa_region,
-            aes(geometry = geometry), 
-            fill = color_principal, color = color_fondo) +
-    # puntos
-    geom_sf(aes(geometry = punto, 
-                size = n),
-            alpha = 0.5, color = color_negativo) +
-    geom_sf_text(aes(geometry = punto, 
-                     label = nombre_comuna), 
-                 color = color_fondo, check_overlap = T) +
-    coord_sf(expand = FALSE) +
-    # guides(size = guide_legend(position = "bottom")) +
-    guides(size = guide_none()) +
-    scale_size(range = c(6, 15)) +
-    theme_void() +
-    tema_fondo
+  output$mapa_femicidios_region <- renderPlot({
+    # browser()
+    
+    numero_region <- unique(mapa_datos_region()$codigo_region)[1]
+    # numero_region = "05"
+    
+    # mapa_region <- mapa_regiones |> filter(codigo_region == numero_region)
+    mapa_region <- mapa_comunas |> 
+      filter(codigo_region == numero_region) |> 
+      filter(!codigo_comuna %in% c(5104, 5201)) #excluir islas
+    
+    # if (numero_region == "05") {
+    #   mapa_region <- mapa_region |> 
+    #   smoothr::drop_crumbs(geometry, threshold = units::set_units(30, km^2))
+    # }
+    
+    # mapa_region |>
+    #   ggplot(aes(geometry = geometry)) +
+    #   geom_sf() +
+    #   # geom_sf_text(aes(label = nombre_comuna)) +
+    #   coord_sf(expand = FALSE,
+    #            xlim = c(-71.9, -69.9),
+    #            ylim = c(-34, -32))
+    
+    mapa <- mapa_datos_region() |> 
+      ggplot() +
+      # mapa de chile
+      geom_sf(data = mapa_region,
+              aes(geometry = geometry), 
+              fill = color_principal, color = color_fondo) +
+      # puntos
+      geom_sf(aes(geometry = punto, 
+                  size = n),
+              alpha = 0.5, color = color_negativo) +
+      geom_sf_text(aes(geometry = punto, 
+                       label = nombre_comuna), 
+                   color = color_fondo, check_overlap = T) +
+      coord_sf(expand = FALSE) +
+      # guides(size = guide_legend(position = "bottom")) +
+      guides(size = guide_none()) +
+      scale_size(range = c(6, 15)) +
+      theme_void() +
+      tema_fondo
+    
+    # recortar las islas de valparaíso
+    if (numero_region == "05") {
+      mapa <- mapa +
+        coord_sf(expand = FALSE,
+                 xlim = c(-71.9, -69.9),
+                 ylim = c(-34, -32))
+    }
+    
+    return(mapa)
+  }, background = color_fondo,
+  res = .resolucion)
   
-  # recortar las islas de valparaíso
-  if (numero_region == "05") {
-    mapa <- mapa +
-      coord_sf(expand = FALSE,
-               xlim = c(-71.9, -69.9),
-               ylim = c(-34, -32))
-  }
   
-  return(mapa)
-}, background = color_fondo,
-res = .resolucion)
-
-
-### barras región ----
-casos_region_comunas <- reactive({
-  casos_comunas <- casos_comuna() |> 
-    filter(region == input$mapa_regiones) |> 
-    group_by(comuna) |> 
-    summarize(n = sum(n), .groups = "drop") |> 
-    filter(!is.na(comuna)) |> 
-    # reducir comunas
-    mutate(comuna = forcats::fct_lump_n(comuna, w = n, 
-                                        n = 10, ties.method = "first",
-                                        other_level = "Otras")) |> 
-    group_by(comuna) |> 
-    summarize(n = sum(n), .groups = "drop")
+  ### barras región ----
+  casos_region_comunas <- reactive({
+    # browser()
+    casos_comunas <- casos_comuna() |> 
+      filter(region == input$mapa_regiones) |> 
+      group_by(comuna) |> 
+      summarize(n = sum(n), .groups = "drop") |> 
+      # print(n=Inf)
+      # filter(!is.na(comuna)) |> 
+      mutate(comuna = replace_na(comuna, "Sin información")) |> 
+      # reducir comunas
+      mutate(comuna = forcats::fct_lump_n(comuna, w = n, 
+                                          n = 10, ties.method = "first",
+                                          other_level = "Otras")) |> 
+      group_by(comuna) |> 
+      summarize(n = sum(n), .groups = "drop")
+    
+    # ordenar
+    casos_comunas_2 <- casos_comunas |> 
+      mutate(comuna = stringr::str_wrap(comuna, 24),
+             comuna = forcats::fct_reorder(comuna, n)) |> 
+      arrange(comuna)
+    return(casos_comunas_2)
+  })
   
-  # ordenar
-  casos_comunas_2 <- casos_comunas |> 
-    mutate(comuna = stringr::str_wrap(comuna, 24),
-           comuna = forcats::fct_reorder(comuna, n)) |> 
-    arrange(comuna)
-  return(casos_comunas_2)
-})
-
-output$barras_femicidios_comuna <- renderPlot({
-  # browser()
-  etiqueta_pos = ifelse(casos_region_comunas()$n < 4, 0, 1)
-  etiqueta_x = ifelse(casos_region_comunas()$n < 4, 0.1, -0.1)
-  etiqueta_color = ifelse(casos_region_comunas()$n < 2, color_principal, color_fondo)
+  output$barras_femicidios_comuna <- renderPlot({
+    # browser()
+    
+    # # frecuencia
+    # # dev.new()
+    # casos_region_comunas() |> 
+    #   mutate(n = as.integer(n)) |> 
+    #   ggplot(aes(x = n, y = comuna)) +
+    #   geom_col(width = ancho_col,
+    #            fill = color_principal) +
+    #   geom_text(aes(label = n), 
+    #             hjust = etiqueta_pos,
+    #             nudge_x = etiqueta_x, 
+    #             color = etiqueta_color) +
+    #   scale_x_continuous(expand = expansion(c(0, 0.05)),
+    #                      # breaks = \(x) seq(ceiling(x[1]), floor(x[2]), by = 1)
+    #                      breaks = scales::breaks_pretty()
+    #   ) +
+    #   theme_minimal() +
+    #   theme(panel.grid.major.y = element_blank()) +
+    #   labs(y = NULL, x = "Víctimas por comuna") +
+    #   theme_minimal() +
+    #   tema_fondo +
+    #   tema_texto
+    
+    # porcentaje
+    # dev.new()
+    datos_grafico_comunas <- casos_region_comunas() |> 
+      mutate(n = as.integer(n),
+             p = n/sum(n)) |> 
+      filter(comuna != "Sin información")
+    
+    # browser()
+    ancho_col = 0.6/11*length(datos_grafico_comunas$comuna)
+    max_p <- max(datos_grafico_comunas$p)
+    etiqueta_pos = ifelse(datos_grafico_comunas$p < max_p/2, 0, 1)
+    etiqueta_color = ifelse(datos_grafico_comunas$p < max_p/2, color_principal, color_fondo)
+    etiqueta_x = ifelse(datos_grafico_comunas$p < max_p/2, max_p*0.02, -max_p*0.02)
+    
+    datos_grafico_comunas |> 
+      ggplot(aes(x = p, y = comuna)) +
+      geom_col(width = ancho_col,
+               fill = color_principal) +
+      geom_text(aes(label = scales::percent(p, accuracy = 0.1)), 
+                hjust = etiqueta_pos,
+                nudge_x = etiqueta_x, 
+                color = etiqueta_color) +
+      scale_x_continuous(expand = expansion(c(0, 0.1)),
+                         # breaks = \(x) seq(ceiling(x[1]), floor(x[2]), by = 1)
+                         breaks = scales::breaks_pretty(),
+                         labels = scales::label_percent(accuracy = 0.1)
+      ) +
+      theme_minimal() +
+      theme(panel.grid.major.y = element_blank()) +
+      labs(y = NULL, x = "Víctimas por comuna") +
+      theme_minimal() +
+      tema_fondo +
+      tema_texto
+  }, res = .resolucion)
   
-  ancho_col = 0.6/11*length(casos_region_comunas()$comuna)
   
-  casos_region_comunas() |> 
-    mutate(n = as.integer(n)) |> 
-    ggplot(aes(x = n, y = comuna)) +
-    geom_col(width = ancho_col,
-             fill = color_principal) +
-    geom_text(aes(label = n), 
-              hjust = etiqueta_pos,
-              nudge_x = etiqueta_x, 
-              color = etiqueta_color) +
-    scale_x_continuous(expand = expansion(c(0, 0.05)),
-                       # breaks = \(x) seq(ceiling(x[1]), floor(x[2]), by = 1)
-                       breaks = scales::breaks_pretty()
-    ) +
-    theme_minimal() +
-    theme(panel.grid.major.y = element_blank()) +
-    labs(y = NULL, x = "Víctimas por comuna") +
-    theme_minimal() +
-    tema_fondo +
-    tema_texto
-}, res = .resolucion)
-
-
-
-## tablas ----
-output$tabla_general <- render_gt({
   
-  datos <- femicidios |> 
-    filter(año == input$tabla_año) |> 
-    arrange(desc(id)) |> 
-    select(id, nombre_victima, fecha_femicidio,
-           edad_victima,
-           comuna, region,
-           categoria_femicidio, forma_de_agresion, violencia_sexual, relacion_victima_femicida, antecedentes_ley_vif,
-           nombre_femicida, edad_femicida, ocupacion_femicida, confiesa_delito,	tipificacion_penal,
-           informacion_medios_1, informacion_medios_2) |> 
-    mutate(fuente = case_when(!is.na(informacion_medios_2) ~ glue::glue("[Fuente 1]({informacion_medios_1}), [fuente 2]({informacion_medios_2})"),
-                              !is.na(informacion_medios_1) ~ glue::glue("[Fuente]({informacion_medios_1})"), 
-                              .default = "Sin fuentes"),
-           fuente = purrr::map(fuente, gt::md)) |> 
-    select(-informacion_medios_1, -informacion_medios_2) |> 
-    mutate(across(where(is.character), ~tidyr::replace_na(.x, "Sin información")))
+  ## tablas ----
+  output$tabla_general <- render_gt({
+    
+    datos <- femicidios |> 
+      filter(año == input$tabla_año) |> 
+      arrange(desc(id)) |> 
+      select(id, nombre_victima, fecha_femicidio,
+             edad_victima,
+             comuna, region,
+             categoria_femicidio, forma_de_agresion, violencia_sexual, relacion_victima_femicida, antecedentes_ley_vif,
+             nombre_femicida, edad_femicida, ocupacion_femicida, confiesa_delito,	tipificacion_penal,
+             informacion_medios_1, informacion_medios_2) |> 
+      mutate(fuente = case_when(!is.na(informacion_medios_2) ~ glue::glue("[Fuente 1]({informacion_medios_1}), [fuente 2]({informacion_medios_2})"),
+                                !is.na(informacion_medios_1) ~ glue::glue("[Fuente]({informacion_medios_1})"), 
+                                .default = "Sin fuentes"),
+             fuente = purrr::map(fuente, gt::md)) |> 
+      select(-informacion_medios_1, -informacion_medios_2) |> 
+      mutate(across(where(is.character), ~tidyr::replace_na(.x, "Sin información")))
+    
+    datos |> 
+      gt() |> 
+      cols_align(columns = where(is.numeric), 
+                 align = "center") |> 
+      tab_style(locations = cells_column_labels(),
+                style = cell_text(weight = "bold")) |> 
+      tab_style(locations = cells_body(columns = nombre_victima),
+                style = list(cell_text(color = color_principal, weight = "bold"))) |> 
+      tab_style(locations = cells_body(columns = nombre_femicida),
+                style = list(cell_text(color = color_negativo))) |> 
+      #color edad
+      data_color(
+        columns = edad_victima,
+        method = "numeric", domain = c(0, 100), apply_to = "text",
+        palette = c(color_negativo, color_texto, color_negativo)) |> 
+      #color de casos sin información
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = comuna, rows = comuna == "Sin información")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = region, rows = region == "Sin información")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = categoria_femicidio, rows = categoria_femicidio == "Desconocido")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = forma_de_agresion, rows = forma_de_agresion == "Desconocido/otras agresiones")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = violencia_sexual, rows = violencia_sexual == "Se desconoce")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = antecedentes_ley_vif, rows = antecedentes_ley_vif == "Desconocido")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = relacion_victima_femicida, rows = relacion_victima_femicida == "Desconocida")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = ocupacion_femicida, rows = ocupacion_femicida == "Sin información")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = confiesa_delito, rows = confiesa_delito == "Sin información")) |> 
+      tab_style(style = cell_text(color = color_na),
+                locations = cells_body(columns = tipificacion_penal, rows = tipificacion_penal == "Sin información")
+      ) |> 
+      #missing numéricos 
+      tab_style(style = cell_text(color = color_fondo),
+                locations = cells_body(columns = edad_femicida, rows = is.na(edad_femicida))) |> 
+      tab_style(style = cell_text(color = color_fondo),
+                locations = cells_body(columns = edad_victima, rows = is.na(edad_victima))) |> 
+      #formato fecha
+      fmt_date(columns = fecha_femicidio,
+               date_style = "day_m_year",
+               locale = "es-CL") |> 
+      #nombres de columnas
+      cols_label(
+        id = "N°",
+        nombre_victima = "Nombre de la víctima",
+        fecha_femicidio = "Fecha",
+        edad_victima = "Edad",
+        comuna = "Comuna", region = "Región",
+        categoria_femicidio = "Categoría", 
+        forma_de_agresion = "Agresión", 
+        violencia_sexual = "Violencia sexual", 
+        relacion_victima_femicida = "Relación víctima/femicida", 
+        antecedentes_ley_vif = "Antecedentes VIF",
+        nombre_femicida = "Nombre del femicida", edad_femicida = "Edad del femicida", ocupacion_femicida = "Ocupación del femicida", confiesa_delito = "Confesión del delito",	tipificacion_penal = "Tipificación penal",
+        fuente = "Información en medios de comunicación"
+      ) |> 
+      tab_options(table.font.color = color_texto, table.font.color.light = color_texto,
+                  table_body.hlines.color = color_detalle,
+                  table_body.vlines.color = color_detalle, 
+                  column_labels.border.top.color = color_fondo, column_labels.border.bottom.color = color_detalle, 
+                  table_body.border.bottom.color = color_detalle,
+                  table.background.color = color_fondo, 
+                  table.font.names = "Archivo Narrow")
+  })
   
-  datos |> 
-    gt() |> 
-    cols_align(columns = where(is.numeric), 
-               align = "center") |> 
-    tab_style(locations = cells_column_labels(),
-              style = cell_text(weight = "bold")) |> 
-    tab_style(locations = cells_body(columns = nombre_victima),
-              style = list(cell_text(color = color_principal, weight = "bold"))) |> 
-    tab_style(locations = cells_body(columns = nombre_femicida),
-              style = list(cell_text(color = color_negativo))) |> 
-    #color edad
-    data_color(
-      columns = edad_victima,
-      method = "numeric", domain = c(0, 100), apply_to = "text",
-      palette = c(color_negativo, color_texto, color_negativo)) |> 
-    #color de casos sin información
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = comuna, rows = comuna == "Sin información")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = region, rows = region == "Sin información")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = categoria_femicidio, rows = categoria_femicidio == "Desconocido")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = forma_de_agresion, rows = forma_de_agresion == "Desconocido/otras agresiones")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = violencia_sexual, rows = violencia_sexual == "Se desconoce")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = antecedentes_ley_vif, rows = antecedentes_ley_vif == "Desconocido")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = relacion_victima_femicida, rows = relacion_victima_femicida == "Desconocida")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = ocupacion_femicida, rows = ocupacion_femicida == "Sin información")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = confiesa_delito, rows = confiesa_delito == "Sin información")) |> 
-    tab_style(style = cell_text(color = color_na),
-              locations = cells_body(columns = tipificacion_penal, rows = tipificacion_penal == "Sin información")
-    ) |> 
-    #missing numéricos 
-    tab_style(style = cell_text(color = color_fondo),
-              locations = cells_body(columns = edad_femicida, rows = is.na(edad_femicida))) |> 
-    tab_style(style = cell_text(color = color_fondo),
-              locations = cells_body(columns = edad_victima, rows = is.na(edad_victima))) |> 
-    #formato fecha
-    fmt_date(columns = fecha_femicidio,
-             date_style = "day_m_year",
-             locale = "es-CL") |> 
-    #nombres de columnas
-    cols_label(
-      id = "N°",
-      nombre_victima = "Nombre de la víctima",
-      fecha_femicidio = "Fecha",
-      edad_victima = "Edad",
-      comuna = "Comuna", region = "Región",
-      categoria_femicidio = "Categoría", 
-      forma_de_agresion = "Agresión", 
-      violencia_sexual = "Violencia sexual", 
-      relacion_victima_femicida = "Relación víctima/femicida", 
-      antecedentes_ley_vif = "Antecedentes VIF",
-      nombre_femicida = "Nombre del femicida", edad_femicida = "Edad del femicida", ocupacion_femicida = "Ocupación del femicida", confiesa_delito = "Confesión del delito",	tipificacion_penal = "Tipificación penal",
-      fuente = "Información en medios de comunicación"
-    ) |> 
-    tab_options(table.font.color = color_texto, table.font.color.light = color_texto,
-                table_body.hlines.color = color_detalle,
-                table_body.vlines.color = color_detalle, 
-                column_labels.border.top.color = color_fondo, column_labels.border.bottom.color = color_detalle, 
-                table_body.border.bottom.color = color_detalle,
-                table.background.color = color_fondo, 
-                table.font.names = "Archivo Narrow")
-})
-
-
-## descargas ----
-
-output$descargar_todo <- downloadHandler(
-  filename = function() {
-    "femicidios_chile_consolidado.xlsx"
-  },
-  content = function(file) {
-    file.copy("datos/femicidios_chile_consolidado.xlsx", file)
-  }
-)
+  
+  ## descargas ----
+  
+  output$descargar_todo <- downloadHandler(
+    filename = function() {
+      "femicidios_chile_consolidado.xlsx"
+    },
+    content = function(file) {
+      file.copy("datos/femicidios_chile_consolidado.xlsx", file)
+    }
+  )
 }
 
 
