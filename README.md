@@ -16,7 +16,7 @@ Sobre los femicidios, la Red Chilena contra la Violencia hacia las Mujeres plant
 [Accede a la aplicación web en este enlace](https://bastianoleah.shinyapps.io/femicidios_chile/)
 
 ## Mapa georeferenciado de femicidios en Chile
-![](graficos/mapa_femicidios_chile.jpg)
+<img src="graficos/mapa_femicidios_chile.jpg" width=60%>
 
 ## Tabla de femicidios en Chile, año 2024
 ![](graficos/tabla_femicidios_2024.png)
