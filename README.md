@@ -15,19 +15,21 @@ Sobre los femicidios, la Red Chilena contra la Violencia hacia las Mujeres plant
 
 [Accede a la aplicación web en este enlace](https://bastianoleah.shinyapps.io/femicidios_chile/)
 
-## Mapa georeferenciado de femicidios en Chile
-<img src="graficos/mapa_femicidios_chile.jpg" width=60%>
-
-## Tabla de femicidios en Chile, año 2024
-![](graficos/tabla_femicidios_2024.png)
-
-
 
 ### Datos
 - [Femicidios por caso (2010-2024) (Red Chilena contra la Violencia hacia las Mujeres)](datos/femicidios_chile_consolidado.xlsx)
 - [Femicidios consumados, por región y año (2010-2024) (Sernameg)](datos/sernameg_femicidios_consumados.xlsx)
 - [Femicidios frustrados, por región y año (2010-2024) (Sernameg)](datos/sernameg_femicidios_frustrados.xlsx)
 
+----
+
+## Mapa georeferenciado de femicidios en Chile
+<img src="graficos/mapa_femicidios_chile.jpg" width=60%>
+
+## Tabla de femicidios en Chile, año 2024
+![](graficos/tabla_femicidios_2024.png)
+
+----
 
 ### Notas técnicas
 Información sobre los scripts y orden de ejecución.
