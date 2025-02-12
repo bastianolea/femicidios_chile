@@ -383,5 +383,6 @@ datos_7 |> glimpse()
 
 
 # guardar ----
-writexl::write_xlsx(datos_7, "datos/femicidios_chile_consolidado.xlsx")
-arrow::write_parquet(datos_7, "datos/femicidios_chile_consolidado.parquet")
+writexl::write_xlsx(datos_8, "datos/femicidios_chile_consolidado.xlsx")
+arrow::write_parquet(datos_8, "datos/femicidios_chile_consolidado.parquet")
+readr::write_csv2(datos_8, "datos/femicidios_chile_consolidado.csv")

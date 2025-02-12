@@ -649,8 +649,8 @@ server <- function(input, output) {
   ### barras país ----
   casos_region <- reactive({
     casos_region <- casos_comuna() |> 
-      left_join(cut_comunas |> 
-                  select(cut_comuna, cut_region), by = "cut_comuna") |> 
+      left_join(cut_comunas |>
+                  select(cut_comuna, cut_region), by = "cut_comuna") |>
       group_by(region, cut_region) |> 
       summarize(n = sum(n), .groups = "drop") |> 
       filter(!is.na(region))
