@@ -1,4 +1,3 @@
-
 # Femicidios en Chile
 
 [Aplicación web](https://bastianoleah.shinyapps.io/femicidios_chile/) para la visualización de datos del [registro de femicidios](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/) realizado por la [Red Chilena contra la Violencia hacia las Mujeres](www.nomasviolenciacontramujeres.cl) desde 2010 en adelante.
@@ -17,6 +16,9 @@ Sobre los femicidios, la Red Chilena contra la Violencia hacia las Mujeres plant
 
 
 ### Datos
+
+Accede a los datos [en este enlace](https://github.com/bastianolea/femicidios_chile/raw/main/datos/femicidios_chile_consolidado.csv).
+
 - [Femicidios por caso (2010-2024) (Red Chilena contra la Violencia hacia las Mujeres)](datos/femicidios_chile_consolidado.xlsx)
 - [Femicidios consumados, por región y año (2010-2024) (Sernameg)](datos/sernameg_femicidios_consumados.xlsx)
 - [Femicidios frustrados, por región y año (2010-2024) (Sernameg)](datos/sernameg_femicidios_frustrados.xlsx)
@@ -40,14 +42,15 @@ Información sobre los scripts y orden de ejecución.
 
 - `app.R`: aplicación Shiny interactiva para la visualización de los datos
 
-- los scripts `mapa_femicidios.R` y `tabla_femicidios.R` generan versiones independientes de las visualizaciones correspondientes en la aplicación.
+- Los scripts `mapas/mapa_femicidios.R` y `tablas/tabla_femicidios.R` generan versiones independientes de las visualizaciones correspondientes en la aplicación.
+
 
 ### Fuentes
 - [Red Chilena contra la Violencia hacia las Mujeres](www.nomasviolenciacontramujeres.cl), quienes en su exhaustiva recopilación plantean "esta base de datos es elaborada y administrada por la Red Chilena contra la Violencia hacia las Mujeres. El uso de los datos está a disposición de todas, todos y todes, citando la fuente." Puedes acceder al registro realizado por la Red en [este enlace.](http://www.nomasviolenciacontramujeres.cl/registro-de-femicidios/)
 - [Servicio Nacional de la Mujer y Equidad de Género](https://www.sernameg.gob.cl/?page_id=27084)
 
 
-![](pantallazos/femicidios_a.jpeg)
-![](pantallazos/femicidios_b.jpeg)
+![](otros/pantallazos/femicidios_a.jpeg)
+![](otros/pantallazos/femicidios_b.jpeg)
 
-![](pantallazos/femicidios_2.jpg)
+![](otros/pantallazos/femicidios_2.jpg)

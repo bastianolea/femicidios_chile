@@ -14,7 +14,9 @@ library(textclean)
 
 # cargar planillas individuales ----
 
-archivos <- dir_ls("datos", regexp = "xlsx") |> str_subset("consolidado", negate = T)
+# obtener todos los archivos de la carpeta
+archivos <- dir_ls("datos/datos_originales/red_chilena_contra_la_violencia/", 
+                   regexp = "xlsx") |> str_subset("consolidado", negate = T)
 
 # carga todos los datos que están en archivos Excel separados por año
 datos <- map(archivos, readxl::read_xlsx) |> 

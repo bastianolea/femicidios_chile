@@ -63,10 +63,12 @@ planillas <- map(registro_enlaces, ~{
 # descargar datos 2024 ----
 # porque esta tabla viene en otro formato, debe descargarse distinto
 library(googledrive)
-drive_download(registro_enlaces[15], path = "datos/femicidios_2024.xlsx", overwrite = TRUE)
+drive_download(registro_enlaces[15], 
+               path = "datos/datos_originales/red_chilena_contra_la_violencia/femicidios_2024.xlsx",
+               overwrite = TRUE)
 
 
-femicidios_2024 <- readxl::read_excel("datos/femicidios_2024.xlsx")
+femicidios_2024 <- readxl::read_excel("datos/datos_originales/red_chilena_contra_la_violencia/femicidios_2024.xlsx")
 
 #agregar 2024 a lista de planillas
 planillas_2 <- list(planillas, femicidios_2024) |> 
@@ -134,6 +136,6 @@ walk(planillas_limpias, ~{
     }
     
     message("guardando año ", año)
-    writexl::write_xlsx(.x, glue("datos/femicidios_{año}.xlsx"))
+    writexl::write_xlsx(.x, glue("datos/datos_originales/red_chilena_contra_la_violencia/femicidios_{año}.xlsx"))
   }
 })

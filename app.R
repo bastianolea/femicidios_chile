@@ -17,10 +17,10 @@ options(shiny.useragg = TRUE)
 
 # datos ----
 femicidios <- arrow::read_parquet("datos/femicidios_chile_consolidado.parquet")
-sernameg <- readRDS("datos_sernameg/sernameg_femicidios_consumados.rds")
+sernameg <- readRDS("datos/sernameg_femicidios_consumados.rds")
 
-mapa_comunas <- readr::read_rds("mapa_comunas.rds")
-mapa_regiones <- readr::read_rds("mapa_regiones.rds")
+mapa_comunas <- readr::read_rds("mapas/mapa_comunas.rds")
+mapa_regiones <- readr::read_rds("mapas/mapa_regiones.rds")
 cut_comunas <- readr::read_csv2("datos/comunas_chile_cut.csv", show_col_types = F)
 
 año_max = 2024
